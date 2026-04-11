@@ -177,16 +177,18 @@ def get_season_weights(profile):
 def _settings_bar(archetype, scenario, season_profile, coverage):
     """#15 — Compact active-settings info row shown at the top of every results tab."""
     cov_icon = "🟢" if coverage >= 0.9 else ("🟡" if coverage >= 0.6 else "🔴")
-    scen_color = {"Worst": "#dc3545", "Base": "#0066cc", "Best": "#28a745"}.get(scenario, "#0066cc")
+    scen_badge = {"Worst": "#dc3545", "Base": "#0066cc", "Best": "#28a745"}.get(scenario, "#0066cc")
     st.markdown(
-        f"""<div style="background:#f0f6ff;border-left:3px solid #0066cc;
-        padding:6px 14px;border-radius:4px;font-size:0.82rem;margin-bottom:12px;
-        display:flex;gap:16px;flex-wrap:wrap;">
-        <span>🏗️ <b>Archetype:</b> {archetype}</span>
-        <span style="color:{scen_color}">📊 <b>Szenario:</b> {scenario}</span>
-        <span>📅 <b>Saisonalität:</b> {season_profile}</span>
-        <span>{cov_icon} <b>Coverage:</b> {coverage:.0%}</span>
-        <span style="color:#888;font-size:0.75rem;">← Änderungen im ⚙️ Inputs-Tab</span>
+        f"""<div style="background:#e8f0fe;border-left:4px solid #0066cc;
+        padding:7px 16px;border-radius:4px;font-size:0.82rem;margin-bottom:14px;
+        display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+        <span style="color:#1a1a2e;font-weight:600;">🏗️ Archetype: <span style="color:#0066cc;">{archetype}</span></span>
+        <span style="color:#1a1a2e;font-weight:600;">📊 Szenario:
+          <span style="background:{scen_badge};color:#fff;padding:1px 7px;border-radius:10px;font-size:0.78rem;">{scenario}</span>
+        </span>
+        <span style="color:#1a1a2e;font-weight:600;">📅 Saisonalität: <span style="color:#444;">{season_profile}</span></span>
+        <span style="color:#1a1a2e;font-weight:600;">{cov_icon} Coverage: <span style="color:#444;">{coverage:.0%}</span></span>
+        <span style="color:#666;font-size:0.74rem;margin-left:auto;">← ⚙️ Inputs-Tab zum Ändern</span>
         </div>""",
         unsafe_allow_html=True,
     )
