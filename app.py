@@ -724,7 +724,11 @@ with tab4:
     st.caption("Trage deine monatlichen Ist-Werte ein. Oder lade Musterdaten zum Ausprobieren.")
 
     report_idx = MONTHS.index(st.session_state.inp_report_month)
-    SAMPLE_MULT = [0.90, 1.07, 1.14, 0.86, 0, 0, 0, 0, 0, 0, 0, 0]
+    # Musterdaten: realistisches B2B-Jahr
+    # Jan–Mär: langsamer Start, Apr–Jun: Normalisierung, Jul–Aug: Sommerloch,
+    # Sep–Nov: starker Herbst, Dez: Jahresendspurt (Ø ≈ 100 % des Plans)
+    SAMPLE_MULT = [0.88, 1.05, 1.16, 0.91, 0.97, 1.06,
+                   0.80, 0.76, 1.14, 1.20, 1.10, 0.97]
 
     ctrl1, ctrl2, ctrl3 = st.columns([2, 1, 1])
     with ctrl1:
@@ -738,6 +742,7 @@ with tab4:
                 "Actual Revenue (€)": [round(plan_revenue[i] * SAMPLE_MULT[i], 0) for i in range(12)],
                 "Actual Budget (€)":  [round(plan_budget[i]  * SAMPLE_MULT[i], 0) for i in range(12)],
             })
+            st.session_state.inp_report_month = "Dec"
             st.rerun()
     with ctrl3:
         if st.button("🗑️ Daten löschen", use_container_width=True):
