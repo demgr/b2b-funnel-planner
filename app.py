@@ -12,6 +12,8 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+import io
+from datetime import datetime
 
 # ============================================================
 # PAGE CONFIG
@@ -173,6 +175,283 @@ def get_season_weights(profile):
     return [v / total for v in idx]
 
 # ============================================================
+# EXPORT HELPERS
+# ============================================================
+
+def generate_excel(revenue_target, deal_size, available_budget, archetype, scenario,
+                   stage_names, funnel_vals, stage4, deals, total_required, coverage,
+                   plan_mqls, plan_deals, plan_revenue, plan_budget,
+                   actual_df, ch_calc):
+    """Build an in-memory .xlsx and return bytes."""
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import (PatternFill, Font, Alignment,
+                                     Border, Side, numbers)
+        from openpyxl.utils import get_column_letter
+    except ImportError:
+        return None
+
+    wb = Workbook()
+
+    HDR_FILL  = PatternFill("solid", fgColor="0066CC")
+    ALT_FILL  = PatternFill("solid", fgColor="EBF3FB")
+    HDR_FONT  = Font(bold=True, color="FFFFFF", size=10)
+    BODY_FONT = Font(size=10)
+    TITLE_FONT= Font(bold=True, size=12, color="1A1A2E")
+    THIN      = Side(style="thin", color="D0D0D0")
+    BORDER    = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
+    CENTER    = Alignment(horizontal="center", vertical="center")
+    LEFT      = Alignment(horizontal="left",   vertical="center")
+
+    def hdr_row(ws, row, values, widths=None):
+        for c, v in enumerate(values, 1):
+            cell = ws.cell(row=row, column=c, value=v)
+            cell.fill = HDR_FILL
+            cell.font = HDR_FONT
+            cell.alignment = CENTER
+            cell.border = BORDER
+        if widths:
+            for c, w in enumerate(widths, 1):
+                ws.column_dimensions[get_column_letter(c)].width = w
+
+    def data_row(ws, row, values, formats=None, alt=False):
+        fill = ALT_FILL if alt else PatternFill("solid", fgColor="FFFFFF")
+        for c, v in enumerate(values, 1):
+            cell = ws.cell(row=row, column=c, value=v)
+            cell.fill = fill
+            cell.font = BODY_FONT
+            cell.alignment = CENTER
+            cell.border = BORDER
+            if formats and c <= len(formats) and formats[c-1]:
+                cell.number_format = formats[c-1]
+
+    # ── Sheet 1: Funnel Summary ──────────────────────────────
+    ws1 = wb.active
+    ws1.title = "Funnel Summary"
+    ws1.row_dimensions[1].height = 24
+
+    ws1.cell(1, 1, "B2B Revenue Reverse Funnel — Summary").font = TITLE_FONT
+    ws1.cell(2, 1, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')} · © Marko Gross")
+    ws1.cell(2, 1).font = Font(italic=True, size=9, color="888888")
+    ws1.merge_cells("A1:D1")
+    ws1.merge_cells("A2:D2")
+
+    ws1.cell(4, 1, "Parameter").font = Font(bold=True)
+    ws1.cell(4, 2, "Value").font = Font(bold=True)
+    params = [
+        ("Revenue Target",        revenue_target,    '€#,##0'),
+        ("Avg. Deal Size",        deal_size,         '€#,##0'),
+        ("Available Budget",      available_budget,  '€#,##0'),
+        ("Required Budget",       total_required,    '€#,##0'),
+        ("Budget Coverage",       coverage,          '0%'),
+        ("Deals needed",          deals,             '#,##0.0'),
+        ("MQLs needed",           stage4,            '#,##0.0'),
+        ("Funnel Archetype",      archetype,         None),
+        ("Scenario",              scenario,          None),
+    ]
+    for r, (label, val, fmt) in enumerate(params, 5):
+        c1 = ws1.cell(r, 1, label);  c1.font = BODY_FONT
+        c2 = ws1.cell(r, 2, val);    c2.font = BODY_FONT
+        if fmt: c2.number_format = fmt
+        f = ALT_FILL if r % 2 == 0 else PatternFill("solid", fgColor="FFFFFF")
+        c1.fill = c2.fill = f
+
+    ws1.cell(15, 1, "Funnel Stages").font = Font(bold=True)
+    hdr_row(ws1, 16, ["Stage", "Value"], [28, 20])
+    for r, (name, val) in enumerate(zip(stage_names, funnel_vals), 17):
+        fmt = '€#,##0' if r == 17 else '#,##0.0'
+        data_row(ws1, r, [name, val], [None, fmt], alt=(r % 2 == 0))
+
+    ws1.column_dimensions["A"].width = 28
+    ws1.column_dimensions["B"].width = 20
+
+    # ── Sheet 2: Monthly Plan ────────────────────────────────
+    ws2 = wb.create_sheet("Monthly Plan")
+    hdr_row(ws2, 1,
+            ["Month", "Plan MQLs", "Plan Deals", "Plan Revenue (€)", "Plan Budget (€)"],
+            [10, 14, 14, 20, 18])
+    for r, m in enumerate(MONTHS, 2):
+        data_row(ws2, r,
+                 [m, plan_mqls[r-2], plan_deals[r-2], plan_revenue[r-2], plan_budget[r-2]],
+                 [None, '#,##0.0', '#,##0.0', '€#,##0', '€#,##0'],
+                 alt=(r % 2 == 0))
+    totals_r = 14
+    data_row(ws2, totals_r,
+             ["TOTAL",
+              sum(plan_mqls), sum(plan_deals),
+              sum(plan_revenue), sum(plan_budget)],
+             [None, '#,##0.0', '#,##0.0', '€#,##0', '€#,##0'])
+    ws2.cell(totals_r, 1).font = Font(bold=True)
+
+    # ── Sheet 3: Plan vs. Actual ────────────────────────────
+    ws3 = wb.create_sheet("Plan vs. Actual")
+    hdr_row(ws3, 1,
+            ["Month",
+             "Plan MQLs", "Actual MQLs", "Δ MQLs",
+             "Plan Revenue (€)", "Actual Revenue (€)", "Δ Revenue (€)"],
+            [10, 14, 14, 12, 18, 20, 16])
+    adf = actual_df.reset_index(drop=True)
+    for r, m in enumerate(MONTHS, 2):
+        pm = plan_mqls[r-2]; am = float(adf.loc[r-2, "Actual MQLs"])
+        pr = plan_revenue[r-2]; ar = float(adf.loc[r-2, "Actual Revenue (€)"])
+        data_row(ws3, r,
+                 [m, pm, am, am - pm, pr, ar, ar - pr],
+                 [None, '#,##0.0', '#,##0.0', '+#,##0.0;-#,##0.0',
+                  '€#,##0', '€#,##0', '+€#,##0;-€#,##0'],
+                 alt=(r % 2 == 0))
+
+    # ── Sheet 4: Channels ───────────────────────────────────
+    ws4 = wb.create_sheet("Channels")
+    hdr_row(ws4, 1,
+            ["Group", "Activity", "Cost/MQL (€)", "Share (%)", "Planned MQLs", "Required Spend (€)"],
+            [22, 28, 14, 12, 16, 20])
+    for r, (_, row) in enumerate(ch_calc.iterrows(), 2):
+        data_row(ws4, r,
+                 [row["group"], row["activity"],
+                  row["cost_per_mql"], row["share_norm"] * 100,
+                  row["planned_mqls"], row["required_spend"]],
+                 [None, None, '€#,##0', '#,##0.0"%"', '#,##0.0', '€#,##0'],
+                 alt=(r % 2 == 0))
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def generate_pdf(revenue_target, deal_size, available_budget, archetype, scenario,
+                 stage_names, funnel_vals, stage4, deals, total_required, coverage,
+                 plan_mqls, plan_revenue, ch_calc):
+    """Build an in-memory PDF and return bytes."""
+    try:
+        from fpdf import FPDF
+    except ImportError:
+        return None
+
+    BLUE  = (0,   102, 204)
+    DARK  = (26,  26,  46)
+    LGRAY = (235, 243, 251)
+    WHITE = (255, 255, 255)
+    DGRAY = (100, 100, 100)
+
+    class PDF(FPDF):
+        def header(self):
+            self.set_fill_color(*BLUE)
+            self.rect(0, 0, 210, 18, "F")
+            self.set_font("Helvetica", "B", 13)
+            self.set_text_color(*WHITE)
+            self.set_xy(8, 3)
+            self.cell(0, 12, "B2B Revenue Reverse Funnel Planner", ln=False)
+            self.set_font("Helvetica", "", 8)
+            ts = datetime.now().strftime("%Y-%m-%d %H:%M")
+            self.set_xy(-60, 5)
+            self.cell(52, 8, ts, align="R")
+            self.ln(20)
+
+        def footer(self):
+            self.set_y(-12)
+            self.set_font("Helvetica", "I", 8)
+            self.set_text_color(*DGRAY)
+            self.cell(0, 6, f"© Marko Gross  ·  B2B Revenue Reverse Funnel Planner  ·  Page {self.page_no()}", align="C")
+
+    pdf = PDF(orientation="P", unit="mm", format="A4")
+    pdf.set_auto_page_break(auto=True, margin=14)
+    pdf.add_page()
+
+    def section_title(title):
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.set_text_color(*BLUE)
+        pdf.set_fill_color(*LGRAY)
+        pdf.cell(0, 7, f"  {title}", ln=True, fill=True)
+        pdf.set_text_color(*DARK)
+        pdf.ln(1)
+
+    def kv_row(label, value, alt=False):
+        pdf.set_font("Helvetica", "", 9)
+        if alt:
+            pdf.set_fill_color(*LGRAY)
+        else:
+            pdf.set_fill_color(*WHITE)
+        pdf.set_text_color(*DARK)
+        pdf.cell(70, 6, label, fill=True, border=0)
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.cell(0, 6, str(value), ln=True, fill=True, border=0)
+
+    # ── Key Metrics ──────────────────────────────────────────
+    section_title("Key Metrics")
+    kv_row("Revenue Target",   f"EUR {revenue_target:,.0f}",  alt=False)
+    kv_row("Avg. Deal Size",   f"EUR {deal_size:,.0f}",       alt=True)
+    kv_row("Available Budget", f"EUR {available_budget:,.0f}",alt=False)
+    kv_row("Required Budget",  f"EUR {total_required:,.0f}",  alt=True)
+    kv_row("Budget Coverage",  f"{coverage:.0%}",          alt=False)
+    kv_row("Deals needed",     f"{deals:,.0f}",            alt=True)
+    kv_row("MQLs needed",      f"{stage4:,.0f}",           alt=False)
+    kv_row("Funnel Archetype", archetype,                  alt=True)
+    kv_row("Scenario",         scenario,                   alt=False)
+    pdf.ln(4)
+
+    # ── Funnel Stages ────────────────────────────────────────
+    section_title("Funnel Stages")
+    col_w = [80, 40]
+    pdf.set_fill_color(*BLUE)
+    pdf.set_text_color(*WHITE)
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.cell(col_w[0], 6, "Stage",  fill=True, border=1)
+    pdf.cell(col_w[1], 6, "Value",  fill=True, border=1, ln=True)
+    for i, (name, val) in enumerate(zip(stage_names, funnel_vals)):
+        pdf.set_fill_color(*(LGRAY if i % 2 == 0 else WHITE))
+        pdf.set_text_color(*DARK)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.cell(col_w[0], 6, name, fill=True, border=1)
+        txt = f"EUR {val:,.0f}" if i == 0 else f"{val:,.0f}"
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.cell(col_w[1], 6, txt, fill=True, border=1, align="R", ln=True)
+    pdf.ln(4)
+
+    # ── Monthly Revenue Plan (compact) ───────────────────────
+    section_title("Monthly Revenue Plan")
+    col_w2 = [18, 33, 33]
+    pdf.set_fill_color(*BLUE)
+    pdf.set_text_color(*WHITE)
+    pdf.set_font("Helvetica", "B", 8)
+    for h, w in zip(["Month", "Plan MQLs", "Plan Revenue (EUR)"], col_w2):
+        pdf.cell(w, 6, h, fill=True, border=1, align="C")
+    pdf.ln()
+    for i, m in enumerate(MONTHS):
+        pdf.set_fill_color(*(LGRAY if i % 2 == 0 else WHITE))
+        pdf.set_text_color(*DARK)
+        pdf.set_font("Helvetica", "", 8)
+        pdf.cell(col_w2[0], 5, m,                         fill=True, border=1, align="C")
+        pdf.cell(col_w2[1], 5, f"{plan_mqls[i]:,.0f}",    fill=True, border=1, align="R")
+        pdf.cell(col_w2[2], 5, f"EUR {plan_revenue[i]:,.0f}",fill=True, border=1, align="R")
+        pdf.ln()
+    pdf.ln(4)
+
+    # ── Top Channels (by spend) ─────────────────────────────
+    section_title("Top Channels by Required Spend")
+    grp = (ch_calc.groupby("group", as_index=False)
+           .agg(mqls=("planned_mqls","sum"), spend=("required_spend","sum"))
+           .sort_values("spend", ascending=False).head(8))
+    col_w3 = [60, 30, 40]
+    pdf.set_fill_color(*BLUE)
+    pdf.set_text_color(*WHITE)
+    pdf.set_font("Helvetica", "B", 8)
+    for h, w in zip(["Channel Group", "MQLs", "Required Spend (EUR)"], col_w3):
+        pdf.cell(w, 6, h, fill=True, border=1, align="C")
+    pdf.ln()
+    for i, (_, row) in enumerate(grp.iterrows()):
+        pdf.set_fill_color(*(LGRAY if i % 2 == 0 else WHITE))
+        pdf.set_text_color(*DARK)
+        pdf.set_font("Helvetica", "", 8)
+        pdf.cell(col_w3[0], 5, row["group"],            fill=True, border=1)
+        pdf.cell(col_w3[1], 5, f"{row['mqls']:,.0f}",   fill=True, border=1, align="R")
+        pdf.cell(col_w3[2], 5, f"EUR {row['spend']:,.0f}", fill=True, border=1, align="R")
+        pdf.ln()
+
+    return bytes(pdf.output())
+
+
+# ============================================================
 # SESSION STATE — DEFAULTS
 # ============================================================
 
@@ -280,6 +559,42 @@ with st.sidebar:
     st.caption(f"Archetype: **{archetype}**")
     st.caption(f"Scenario: **{scenario}**")
     st.caption(f"Seasonality: **{season_profile}**")
+    st.divider()
+    st.markdown("**Export**")
+    _fname_date = datetime.now().strftime("%Y%m%d")
+
+    _excel_bytes = generate_excel(
+        revenue_target, deal_size, available_budget, archetype, scenario,
+        stage_names, funnel_vals, stage4, deals, total_required, coverage,
+        plan_mqls, plan_deals, plan_revenue, plan_budget,
+        st.session_state.actual_df, ch_calc
+    )
+    if _excel_bytes:
+        st.download_button(
+            "📥 Excel exportieren",
+            data=_excel_bytes,
+            file_name=f"B2B_Funnel_Plan_{_fname_date}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+        )
+    else:
+        st.caption("ℹ️ openpyxl nicht installiert")
+
+    _pdf_bytes = generate_pdf(
+        revenue_target, deal_size, available_budget, archetype, scenario,
+        stage_names, funnel_vals, stage4, deals, total_required, coverage,
+        plan_mqls, plan_revenue, ch_calc
+    )
+    if _pdf_bytes:
+        st.download_button(
+            "📄 PDF exportieren",
+            data=_pdf_bytes,
+            file_name=f"B2B_Funnel_Report_{_fname_date}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
+    else:
+        st.caption("ℹ️ fpdf2 nicht installiert")
 
 # ============================================================
 # HEADER
@@ -724,7 +1039,11 @@ with tab4:
     st.caption("Trage deine monatlichen Ist-Werte ein. Oder lade Musterdaten zum Ausprobieren.")
 
     report_idx = MONTHS.index(st.session_state.inp_report_month)
-    SAMPLE_MULT = [0.90, 1.07, 1.14, 0.86, 0, 0, 0, 0, 0, 0, 0, 0]
+    # Musterdaten: realistisches B2B-Jahr
+    # Jan–Mär: langsamer Start, Apr–Jun: Normalisierung, Jul–Aug: Sommerloch,
+    # Sep–Nov: starker Herbst, Dez: Jahresendspurt (Ø ≈ 100 % des Plans)
+    SAMPLE_MULT = [0.88, 1.05, 1.16, 0.91, 0.97, 1.06,
+                   0.80, 0.76, 1.14, 1.20, 1.10, 0.97]
 
     ctrl1, ctrl2, ctrl3 = st.columns([2, 1, 1])
     with ctrl1:
@@ -738,6 +1057,7 @@ with tab4:
                 "Actual Revenue (€)": [round(plan_revenue[i] * SAMPLE_MULT[i], 0) for i in range(12)],
                 "Actual Budget (€)":  [round(plan_budget[i]  * SAMPLE_MULT[i], 0) for i in range(12)],
             })
+            st.session_state.inp_report_month = "Dec"
             st.rerun()
     with ctrl3:
         if st.button("🗑️ Daten löschen", use_container_width=True):
