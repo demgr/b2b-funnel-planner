@@ -28,20 +28,68 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+    /* ── Metrics ───────────────────────────────────────────── */
     div[data-testid="metric-container"] {
         background-color: #f8f9fa;
         border: 1px solid #e9ecef;
         border-radius: 8px;
         padding: 12px 16px;
     }
+
+    /* ── Sidebar ───────────────────────────────────────────── */
     div[data-testid="stSidebar"] { background-color: #0d1b2a; }
     div[data-testid="stSidebar"] * { color: #e0e0e0 !important; }
+
+    /* ── Headings ──────────────────────────────────────────── */
     h1 { color: #1a1a2e; }
     .section-header {
         font-size: 1rem; font-weight: 700;
         color: #0066cc; margin-bottom: 4px;
         border-bottom: 2px solid #e9ecef;
         padding-bottom: 4px;
+    }
+
+    /* ── Tab bar container ─────────────────────────────────── */
+    div[data-testid="stTabs"] > div:first-child {
+        background-color: #f0f6ff;
+        border-radius: 10px 10px 0 0;
+        padding: 4px 6px 0 6px;
+        border-bottom: 3px solid #0066cc;
+        gap: 4px;
+    }
+
+    /* ── All tab buttons ───────────────────────────────────── */
+    button[data-baseweb="tab"] {
+        font-size: 0.88rem !important;
+        font-weight: 600 !important;
+        color: #444 !important;
+        background-color: #e2ecf9 !important;
+        border-radius: 8px 8px 0 0 !important;
+        padding: 10px 18px !important;
+        border: 1px solid #c8d8ee !important;
+        border-bottom: none !important;
+        margin-right: 2px !important;
+        transition: background-color 0.15s, color 0.15s !important;
+    }
+
+    /* ── Hover state ───────────────────────────────────────── */
+    button[data-baseweb="tab"]:hover {
+        background-color: #cfe0f7 !important;
+        color: #0066cc !important;
+    }
+
+    /* ── Active / selected tab ─────────────────────────────── */
+    button[data-baseweb="tab"][aria-selected="true"] {
+        background-color: #0066cc !important;
+        color: #ffffff !important;
+        border-color: #0066cc !important;
+        font-weight: 700 !important;
+    }
+
+    /* ── Remove the default Streamlit underline indicator ─── */
+    button[data-baseweb="tab"][aria-selected="true"]::after,
+    button[data-baseweb="tab"]::after {
+        display: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
