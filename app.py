@@ -616,13 +616,14 @@ st.divider()
 # TABS
 # ============================================================
 
-tab_inp, tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab_inp, tab1, tab2, tab3, tab4, tab5, tab_docs = st.tabs([
     "⚙️ Inputs",
     "🔻 Funnel & Budget",
     "🎲 Risk / Monte Carlo",
     "📅 Monthly Plan",
     "📈 Plan vs. Actual",
     "📡 Channels",
+    "📖 Docs",
 ])
 
 # ══════════════════════════════════════════════════════════════
@@ -1210,6 +1211,263 @@ with tab5:
     ch_detail["Geplante MQLs"] = ch_detail["Geplante MQLs"].apply(lambda x: f"{x:,.0f}")
     ch_detail["Spend (€)"]     = ch_detail["Spend (€)"].apply(lambda x: f"€{x:,.0f}")
     st.dataframe(ch_detail, use_container_width=True, hide_index=True)
+
+
+# ══════════════════════════════════════════════════════════════
+# TAB: DOCS
+# ══════════════════════════════════════════════════════════════
+with tab_docs:
+
+    st.markdown("""
+<style>
+.docs-section { margin-bottom: 8px; }
+.docs-de { background:#f0f6ff; border-left:3px solid #0066cc;
+           padding:10px 14px; border-radius:4px; margin-bottom:6px; }
+.docs-en { background:#f6f6f6; border-left:3px solid #888;
+           padding:10px 14px; border-radius:4px; margin-bottom:12px; }
+.docs-label-de { font-size:0.72rem; font-weight:700; color:#0066cc;
+                 text-transform:uppercase; letter-spacing:.05em; }
+.docs-label-en { font-size:0.72rem; font-weight:700; color:#888;
+                 text-transform:uppercase; letter-spacing:.05em; }
+</style>
+""", unsafe_allow_html=True)
+
+    st.title("📖 Dokumentation / Documentation")
+    st.caption("B2B Revenue Reverse Funnel Planner · © Marko Gross")
+    st.divider()
+
+    # ── Quick Start ───────────────────────────────────────────
+    with st.expander("🚀 Quick Start — In 3 Schritten / In 3 Steps", expanded=True):
+        c_de, c_en = st.columns(2)
+        with c_de:
+            st.markdown('<p class="docs-label-de">🇩🇪 Deutsch</p>', unsafe_allow_html=True)
+            st.markdown("""
+**1. ⚙️ Inputs öffnen**
+Umsatzziel, Ø Deal Size und verfügbares Marketingbudget eingeben.
+
+**2. Funnel-Archetype wählen**
+Classic B2B, Enterprise, SaaS/PLG oder Channel/Partner — passend zu eurem Vertriebsmodell. Die Conversion Rates werden automatisch vorbelegt.
+
+**3. Tabs durchklicken**
+Die App berechnet sofort: Wie viele MQLs, Deals und wie viel Budget ihr braucht — inklusive Risikobewertung, Monatsplan und Kanal-Allokation.
+""")
+        with c_en:
+            st.markdown('<p class="docs-label-en">🇬🇧 English</p>', unsafe_allow_html=True)
+            st.markdown("""
+**1. Open ⚙️ Inputs**
+Enter your revenue target, average deal size, and available marketing budget.
+
+**2. Choose a funnel archetype**
+Classic B2B, Enterprise, SaaS/PLG, or Channel/Partner — matching your sales motion. Conversion rates are pre-filled automatically.
+
+**3. Explore the tabs**
+The app instantly calculates how many MQLs, deals, and how much budget you need — including risk assessment, monthly plan, and channel allocation.
+""")
+
+    # ── Methodology ───────────────────────────────────────────
+    with st.expander("🔬 Methodik / Methodology — PERT + Monte Carlo"):
+        c_de, c_en = st.columns(2)
+        with c_de:
+            st.markdown('<p class="docs-label-de">🇩🇪 Deutsch</p>', unsafe_allow_html=True)
+            st.markdown("""
+**PERT-Schätzung**
+
+Statt einer einzigen Conversion-Rate-Annahme arbeitet das Tool mit drei Szenarien pro Funnel-Stufe: Worst Case, Base Case und Best Case. Der gewichtete Mittelwert folgt der PERT-Formel:
+
+> *Ø = (Worst + 4 × Base + Best) / 6*
+
+Der realistischste Fall (Base) fließt mit dem stärksten Gewicht ein — Extremwerte beeinflussen das Ergebnis, dominieren es aber nicht.
+
+---
+
+**Monte Carlo Simulation**
+
+Die Risikoanalyse simuliert bis zu 2.000 mögliche Jahresverläufe. Jede Simulation zieht zufällige Conversion Rates (normalverteilt um den PERT-Mittelwert) und berechnet den resultierenden Budget- und MQL-Bedarf.
+
+Das Ergebnis ist eine **Verteilung statt eines Punktwertes**:
+- **P10** = optimistisches Szenario
+- **P50** = realistischer Median
+- **P90** = konservative Planung
+""")
+        with c_en:
+            st.markdown('<p class="docs-label-en">🇬🇧 English</p>', unsafe_allow_html=True)
+            st.markdown("""
+**PERT Estimation**
+
+Instead of a single conversion rate, the tool uses three scenarios per funnel stage: Worst, Base, and Best case. The weighted average follows the PERT formula:
+
+> *Mean = (Worst + 4 × Base + Best) / 6*
+
+The most realistic case (Base) carries the strongest weight — extreme values influence the result without dominating it.
+
+---
+
+**Monte Carlo Simulation**
+
+The risk analysis simulates up to 2,000 possible year scenarios. Each run draws random conversion rates (normally distributed around the PERT mean) and calculates the resulting budget and MQL requirements.
+
+The result is a **distribution, not a single number**:
+- **P10** = optimistic scenario
+- **P50** = realistic median
+- **P90** = conservative planning base
+""")
+
+    # ── Tab Guide ─────────────────────────────────────────────
+    with st.expander("🗂️ Tab-Guide"):
+        st.markdown("""
+| Tab | DE — Was du siehst & wofür | EN — What you see & why |
+|-----|---------------------------|-------------------------|
+| ⚙️ **Inputs** | Alle Eingabefelder: Ziele, Archetype, CRs, Saisonalität, Kanäle | All input fields: targets, archetype, CRs, seasonality, channels |
+| 🔻 **Funnel & Budget** | Trichter-Grafik, Budget-Gauge, Kanal-Donut — Gesamtbild auf einen Blick | Funnel chart, budget gauge, channel donut — full picture at a glance |
+| 🎲 **Risk / Monte Carlo** | Histogramm, P10/P50/P90 — Wie sicher ist der Plan? | Histogram, P10/P50/P90 — how robust is the plan? |
+| 📅 **Monthly Plan** | Monatstabelle + saisonaler Verlauf — Wann brauche ich was? | Monthly table + seasonal curve — when do you need what? |
+| 📈 **Plan vs. Actual** | Soll-Ist-Vergleich — Abweichungen tracken | Plan vs. actual comparison — track variance month by month |
+| 📡 **Channels** | Spend-Verteilung pro Kanal — Budget-Allokation optimieren | Spend breakdown per channel — optimize budget allocation |
+| 📖 **Docs** | Diese Dokumentation / This documentation | Diese Dokumentation / This documentation |
+""")
+        st.caption("💡 DE: Sidebar aufklappen für kompakte KPIs + Excel/PDF-Export. · EN: Open the sidebar for compact KPIs and Excel/PDF export.")
+
+    # ── FAQ ───────────────────────────────────────────────────
+    with st.expander("❓ FAQ / Tipps & Tricks"):
+        faqs = [
+            (
+                'Was bedeutet "Budget Coverage"?',
+                'Verhältnis von verfügbarem zu benötigtem Budget. 🟢 ≥ 90 % = gut gedeckt, 🟡 60–90 % = Lücke vorhanden, 🔴 < 60 % = kritisch.',
+                'What does "Budget Coverage" mean?',
+                'Ratio of available to required budget. 🟢 ≥ 90% = well covered, 🟡 60–90% = gap exists, 🔴 < 60% = critical.',
+            ),
+            (
+                'Welchen Funnel-Archetype soll ich wählen?',
+                '**Classic B2B** für Standardvertrieb mit Inside/Field Sales. **Enterprise** wenn Zyklen > 6 Monate. **SaaS/PLG** wenn ein Free-Tier oder Trial existiert. **Channel** wenn Partner den Großteil der Pipeline generieren.',
+                'Which funnel archetype should I choose?',
+                '**Classic B2B** for standard inside/field sales. **Enterprise** for cycles >6 months. **SaaS/PLG** if you have a free tier or trial. **Channel** if partners generate most of your pipeline.',
+            ),
+            (
+                'Wie nutze ich "Plan vs. Actual" am besten?',
+                'Monatlich die Ist-Zahlen eintragen — die App zeigt sofort, ob ihr auf Kurs seid. Mit "Musterdaten laden" bekommt ihr einen realistischen Jahresverlauf als Startpunkt.',
+                'How do I get the most out of "Plan vs. Actual"?',
+                'Enter actuals monthly — the app instantly shows whether you\'re on track. Use "Load sample data" for a realistic seasonal starting point.',
+            ),
+            (
+                'Kann ich den Plan exportieren?',
+                'Ja — Sidebar aufklappen (Pfeil links oben). Dort findest du **📥 Excel exportieren** (4 Sheets: Summary, Monthly Plan, Plan vs. Actual, Channels) und **📄 PDF exportieren** (kompakter 1-Seiter).',
+                'Can I export the plan?',
+                'Yes — open the sidebar (arrow top left). You\'ll find **📥 Excel Export** (4 sheets: Summary, Monthly Plan, Plan vs. Actual, Channels) and **📄 PDF Export** (compact 1-pager).',
+            ),
+            (
+                'Wie viele Monte-Carlo-Simulationen sind sinnvoll?',
+                '500 ist ein guter Standard. Für Präsentationen oder finale Planungen empfehlen sich 1.000–2.000 Runs für stabilere Perzentile. Mehr Runs = längere Ladezeit.',
+                'How many Monte Carlo simulations make sense?',
+                '500 is a good default. For presentations or final planning, 1,000–2,000 runs give more stable percentiles. More runs = longer load time.',
+            ),
+        ]
+        for q_de, a_de, q_en, a_en in faqs:
+            c_de, c_en = st.columns(2)
+            with c_de:
+                st.markdown(f'<p class="docs-label-de">🇩🇪</p>', unsafe_allow_html=True)
+                st.markdown(f"**{q_de}**")
+                st.markdown(f"→ {a_de}")
+            with c_en:
+                st.markdown(f'<p class="docs-label-en">🇬🇧</p>', unsafe_allow_html=True)
+                st.markdown(f"**{q_en}**")
+                st.markdown(f"→ {a_en}")
+            st.divider()
+
+    # ── Glossary ──────────────────────────────────────────────
+    with st.expander("📚 Glossar / Glossary"):
+        glossary = [
+            ("Reverse Funnel",    "Vom Ziel rückwärts rechnen: Umsatz → Deals → MQLs → Budget",            "Working backwards from goal: Revenue → Deals → MQLs → Budget"),
+            ("PERT",              "Program Evaluation and Review Technique — gewichtete Drei-Punkt-Schätzung (Worst / Base / Best)", "Weighted three-point estimation method (Worst / Base / Best)"),
+            ("Monte Carlo",       "Statistische Simulation mit bis zu 2.000 zufälligen Szenarien zur Risikoabschätzung",             "Statistical simulation using up to 2,000 random scenarios to quantify risk"),
+            ("MQL",               "Marketing Qualified Lead — Lead, der Marketingkriterien erfüllt",         "Lead that meets marketing qualification criteria"),
+            ("SQL",               "Sales Qualified Lead — vom Vertrieb akzeptierter Lead",                   "Lead accepted and validated by the sales team"),
+            ("Opportunity (Opp)", "Qualifizierte Verkaufschance im CRM",                                     "Qualified sales opportunity tracked in the CRM"),
+            ("Win Rate",          "Anteil gewonnener Deals an allen Opportunities",                          "Share of deals won vs. total opportunities"),
+            ("Conversion Rate",   "Übergangsrate zwischen zwei aufeinanderfolgenden Funnel-Stufen",           "Transition rate between two consecutive funnel stages"),
+            ("P10 / P50 / P90",   "Perzentile: P10 = optimistisch, P50 = Median, P90 = konservativ",        "Percentiles: P10 = optimistic, P50 = median, P90 = conservative"),
+            ("Budget Coverage",   "Deckungsgrad: Verfügbares ÷ benötigtes Budget",                          "Coverage ratio: Available ÷ required budget"),
+            ("Cost per MQL",      "Durchschnittliche Kosten pro MQL je Kanal",                               "Average cost to generate one MQL per channel"),
+            ("Touchpoint",        "Erster Kontaktpunkt eines Leads mit Marketing-Maßnahmen",                 "First point of contact between a lead and a marketing activity"),
+            ("Saisonalität",      "Monatliche Gewichtung des Jahresplans (z. B. Q4-lastig)",                 "Monthly weighting of the annual plan (e.g. Q4-heavy)"),
+            ("Archetype",         "Vordefiniertes Funnel-Muster passend zum Vertriebsmodell",                "Pre-defined funnel pattern matching your sales motion"),
+        ]
+        g_de, g_en = st.columns(2)
+        with g_de:
+            st.markdown('<p class="docs-label-de">🇩🇪 Deutsch</p>', unsafe_allow_html=True)
+            rows_de = "| Begriff | Erklärung |\n|---|---|\n"
+            for term, de, _ in glossary:
+                rows_de += f"| **{term}** | {de} |\n"
+            st.markdown(rows_de)
+        with g_en:
+            st.markdown('<p class="docs-label-en">🇬🇧 English</p>', unsafe_allow_html=True)
+            rows_en = "| Term | Explanation |\n|---|---|\n"
+            for term, _, en in glossary:
+                rows_en += f"| **{term}** | {en} |\n"
+            st.markdown(rows_en)
+
+    # ── Use Cases ─────────────────────────────────────────────
+    with st.expander("💼 Use Cases — Marketing Budget Planning"):
+        st.markdown("---")
+        uc1_de, uc1_en = st.columns(2)
+        with uc1_de:
+            st.markdown('<p class="docs-label-de">🇩🇪 Use Case 1: Jahresplanung Marketing-Budget</p>', unsafe_allow_html=True)
+            st.markdown("""
+**Szenario:** Ein B2B-SaaS-Unternehmen plant sein Marketingbudget für das kommende Jahr. Umsatzziel: 2 Mio. €, Ø Deal Size: 8.000 €.
+
+**Vorgehen:**
+1. Archetype **SaaS / PLG** wählen, Umsatzziel auf 2.000.000 € setzen
+2. Base-Case CRs aus CRM-Historien eintragen (Worst/Best als ±30 %)
+3. Monte Carlo auf 1.000 Simulationen — **P90 als Planungsbasis** für den Budget-Request
+4. Saisonalität **Q4 heavy** → zeigt, dass ~38 % des Budgets in Q3/Q4 fließen müssen
+5. **Excel exportieren** → direkt als Anlage für den CFO-Review
+
+**Ergebnis:** Statt einer einzigen Zahl liefert die Präsentation drei Szenarien (P10/P50/P90) mit Wahrscheinlichkeiten — deutlich überzeugender als ein einzelner Bauchgefühl-Wert.
+""")
+        with uc1_en:
+            st.markdown('<p class="docs-label-en">🇬🇧 Use Case 1: Annual Marketing Budget Planning</p>', unsafe_allow_html=True)
+            st.markdown("""
+**Scenario:** A B2B SaaS company plans its marketing budget for the upcoming year. Revenue target: EUR 2M, avg. deal size: EUR 8,000.
+
+**Steps:**
+1. Select archetype **SaaS / PLG**, set revenue target to 2,000,000
+2. Enter Base Case CRs from CRM history (Worst/Best as ±30%)
+3. Run Monte Carlo at 1,000 simulations — use **P90 as planning base** for budget request
+4. Seasonality **Q4 heavy** → shows ~38% of budget must land in Q3/Q4
+5. **Export to Excel** → attach directly to CFO budget review
+
+**Result:** Instead of a single number, the presentation delivers three scenarios (P10/P50/P90) with probabilities — far more compelling than a single gut-feeling estimate.
+""")
+
+        st.markdown("---")
+        uc2_de, uc2_en = st.columns(2)
+        with uc2_de:
+            st.markdown('<p class="docs-label-de">🇩🇪 Use Case 2: Mid-Year Review — Ist das Ziel noch erreichbar?</p>', unsafe_allow_html=True)
+            st.markdown("""
+**Szenario:** Q2 ist abgeschlossen. Das Team hat 45 % der geplanten MQLs erreicht, aber nur 30 % des Umsatzziels. Der VP fragt: Reichen die verbleibenden 6 Monate noch?
+
+**Vorgehen:**
+1. Tab **📈 Plan vs. Actual** öffnen → Ist-Zahlen für Jan–Jun eintragen
+2. Lücke sofort sichtbar: Wo weicht es am stärksten ab — MQLs, Win Rate oder Deal Size?
+3. Im Tab **⚙️ Inputs** die CRs für H2 anpassen (z. B. höhere Win Rate durch neues Sales-Enablement)
+4. Monte Carlo zeigt: Mit optimierten CRs liegt P50 noch knapp über Ziel — P90 erfordert +15 % Budget
+5. **PDF exportieren** → kompakter 1-Seiter für das Management-Meeting
+
+**Ergebnis:** Datenbasierte Entscheidung statt Schätzung — entweder Jahresziel anpassen oder Budget nachschießen, mit klarer quantitativer Begründung.
+""")
+        with uc2_en:
+            st.markdown('<p class="docs-label-en">🇬🇧 Use Case 2: Mid-Year Review — Is the target still achievable?</p>', unsafe_allow_html=True)
+            st.markdown("""
+**Scenario:** Q2 is done. The team hit 45% of planned MQLs but only 30% of the revenue target. The VP asks: Can we still close the gap in H2?
+
+**Steps:**
+1. Open tab **📈 Plan vs. Actual** → enter actuals for Jan–Jun
+2. Gap immediately visible: where is the biggest deviation — MQLs, win rate, or deal size?
+3. In **⚙️ Inputs**, adjust H2 CRs (e.g. higher win rate from new sales enablement)
+4. Monte Carlo shows: with optimized CRs, P50 is just above target — P90 requires +15% budget
+5. **Export to PDF** → compact 1-pager for the management meeting
+
+**Result:** Data-driven decision instead of guesswork — either adjust the annual target or inject budget, with a clear quantitative rationale.
+""")
 
 
 # ============================================================
