@@ -174,6 +174,23 @@ def get_season_weights(profile):
     total = sum(idx)
     return [v / total for v in idx]
 
+def _settings_bar(archetype, scenario, season_profile, coverage):
+    """#15 — Compact active-settings info row shown at the top of every results tab."""
+    cov_icon = "🟢" if coverage >= 0.9 else ("🟡" if coverage >= 0.6 else "🔴")
+    scen_color = {"Worst": "#dc3545", "Base": "#0066cc", "Best": "#28a745"}.get(scenario, "#0066cc")
+    st.markdown(
+        f"""<div style="background:#f0f6ff;border-left:3px solid #0066cc;
+        padding:6px 14px;border-radius:4px;font-size:0.82rem;margin-bottom:12px;
+        display:flex;gap:16px;flex-wrap:wrap;">
+        <span>🏗️ <b>Archetype:</b> {archetype}</span>
+        <span style="color:{scen_color}">📊 <b>Szenario:</b> {scenario}</span>
+        <span>📅 <b>Saisonalität:</b> {season_profile}</span>
+        <span>{cov_icon} <b>Coverage:</b> {coverage:.0%}</span>
+        <span style="color:#888;font-size:0.75rem;">← Änderungen im ⚙️ Inputs-Tab</span>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+
 # ============================================================
 # EXPORT HELPERS
 # ============================================================
@@ -457,6 +474,7 @@ def generate_pdf(revenue_target, deal_size, available_budget, archetype, scenari
 
 _DEFAULTS = {
     "inp_revenue":       1_000_000,
+    "onboarding_done":   False,
     "inp_deal_size":     5_000,
     "inp_budget":        300_000,
     "inp_archetype":     "Classic B2B",
@@ -610,6 +628,28 @@ k2.metric("Required Budget",      f"€{total_required:,.0f}", delta=gap_label, 
 k3.metric(f"{cov_icon} Coverage", f"{coverage:.0%}")
 k4.metric("MQLs needed",          f"{stage4:,.0f}")
 k5.metric("Deals needed",         f"{deals:,.0f}")
+
+# ── #9 Budget Status Banner ───────────────────────────────────
+if coverage >= 0.9:
+    st.success(
+        f"✅ **Budget ausreichend** — {coverage:.0%} Deckungsgrad. "
+        f"Du hast €{abs(budget_gap):,.0f} Puffer über dem erforderlichen Budget.",
+        icon="🟢"
+    )
+elif coverage >= 0.6:
+    st.warning(
+        f"⚠️ **Budget-Lücke** — {coverage:.0%} Deckungsgrad. "
+        f"Es fehlen €{abs(budget_gap):,.0f}. Prüfe Channel-Mix oder erhöhe das Budget im ⚙️ Inputs-Tab.",
+        icon="🟡"
+    )
+else:
+    st.error(
+        f"🔴 **Kritische Budget-Lücke** — nur {coverage:.0%} Deckungsgrad. "
+        f"Es fehlen €{abs(budget_gap):,.0f} ({(1-coverage):.0%} des Bedarfs). "
+        f"Empfehlung: Umsatzziel anpassen, Deal Size erhöhen oder Budget aufstocken.",
+        icon="🔴"
+    )
+
 st.divider()
 
 # ============================================================
@@ -630,6 +670,23 @@ tab_inp, tab1, tab2, tab3, tab4, tab5, tab_docs = st.tabs([
 # TAB: INPUTS
 # ══════════════════════════════════════════════════════════════
 with tab_inp:
+
+    # ── #26 Onboarding Banner ─────────────────────────────────
+    if not st.session_state.get("onboarding_done", False):
+        with st.container():
+            st.info(
+                "👋 **Willkommen im B2B Reverse Funnel Planner!** — "
+                "Starte hier mit deinen Zielen (A), wähle deinen Funnel-Typ (B) "
+                "und passe die Conversion Rates an (C). "
+                "Die Ergebnisse siehst du live in den anderen Tabs. · "
+                "*Welcome! Enter your targets in section A, pick a funnel archetype in B, "
+                "and adjust conversion rates in C. Results update live across all tabs.*",
+                icon="🚀"
+            )
+            if st.button("✓ Verstanden — nicht mehr anzeigen", key="dismiss_onboarding"):
+                st.session_state.onboarding_done = True
+                st.rerun()
+        st.markdown("")
 
     # ── A: Business Targets ───────────────────────────────────
     st.markdown('<p class="section-header">A · Business Targets</p>', unsafe_allow_html=True)
@@ -697,6 +754,40 @@ with tab_inp:
         f"Alle Werte in Prozent (z.B. 25 = 25 %)"
     )
 
+    # ── #33 Benchmark-Tooltips per archetype ─────────────────
+    _CR_BENCHMARKS = {
+        "Classic B2B": [
+            "Win Rate · Benchmark B2B: 20–30 %. Enterprise-Deals oft 15–20 %.",
+            "SQL→Opp · Benchmark: 35–50 %. Hängt stark von SDR-Qualität ab.",
+            "MQL→SQL · Benchmark: 25–40 %. Lead-Scoring verbessert diesen Wert.",
+            "Lead→MQL · Benchmark: 10–20 %. Qualifizierungskriterien entscheidend.",
+            "Touchpoint→Lead · Benchmark: 1–3 %. Variiert stark je Kanal.",
+        ],
+        "Enterprise": [
+            "Win Rate · Benchmark Enterprise: 15–25 %. Lange Zyklen, weniger Deals.",
+            "SQL→Opp · Benchmark: 30–50 %. Hohe Qualifizierung nötig.",
+            "MQL→SQL · Benchmark: 45–75 %. Enterprise-MQLs sind oft vorqualifiziert.",
+            "Lead→MQL · Benchmark: 15–35 %. ABM erhöht diesen Wert.",
+            "Touchpoint→Lead · Benchmark: 0.5–2 %. Nische, hoher Intent nötig.",
+        ],
+        "SaaS / PLG": [
+            "Win Rate · Benchmark SaaS: 18–28 %. PLG-Deals konvertieren schneller.",
+            "SQL→Opp · Benchmark: 40–60 %. Product-qualified Leads sind wärmer.",
+            "PQL→SQL · Benchmark: 30–55 %. Usage-Signale erhöhen Conversion.",
+            "Signup→PQL · Benchmark: 10–25 %. Aktivierungs-Rate ist kritisch.",
+            "Visitor→Signup · Benchmark: 2–10 %. Onboarding-UX ist entscheidend.",
+        ],
+        "Channel / Partner": [
+            "Win Rate · Benchmark Channel: 25–40 %. Partner-Deals oft vorgewärmt.",
+            "Partner SQL→Opp · Benchmark: 40–70 %. Abhängig von Partner-Enablement.",
+            "Partner Lead→SQL · Benchmark: 25–50 %. Co-Selling erhöht Rate.",
+            "Contact→Lead · Benchmark: 15–30 %. Partnerqualität entscheidend.",
+            "Touchpoint→Contact · Benchmark: 2–7 %. Events & Co-Marketing.",
+        ],
+    }
+    _benchmarks = _CR_BENCHMARKS.get(st.session_state.inp_archetype,
+                                     [""] * 5)
+
     edited_cr = st.data_editor(
         st.session_state.inp_cr_df,
         use_container_width=True,
@@ -705,14 +796,18 @@ with tab_inp:
         column_config={
             "Stage":      st.column_config.TextColumn("Funnel-Stufe", disabled=True, width="large"),
             "Worst (%)":  st.column_config.NumberColumn("Worst (%)",  min_value=1, max_value=99, step=1,
-                           help="Pessimistischer, aber realistischer Wert"),
+                           help="Pessimistischer, aber realistischer Wert — PERT-Gewicht: 1×"),
             "Base (%)":   st.column_config.NumberColumn("Base (%)",   min_value=1, max_value=99, step=1,
-                           help="Realistisch erwarteter Wert"),
+                           help="Realistisch erwarteter Wert — PERT-Gewicht: 4× (stärkster Einfluss)"),
             "Best (%)":   st.column_config.NumberColumn("Best (%)",   min_value=1, max_value=99, step=1,
-                           help="Optimistischer, aber realistischer Wert"),
+                           help="Optimistischer, aber realistischer Wert — PERT-Gewicht: 1×"),
         },
         key="cr_editor",
     )
+    # Show per-stage benchmark hints below table
+    with st.expander("📊 Branchen-Benchmarks für diesen Archetype anzeigen", expanded=False):
+        for bm in _benchmarks:
+            st.caption(f"• {bm}")
     st.session_state.inp_cr_df = edited_cr
 
     # Visual: aktive CRs als kleine Balken
@@ -838,6 +933,40 @@ with tab_inp:
             help="Bis zu welchem Monat wird YTD ausgewertet"
         )
 
+    # ── #37 Inputs Progress Indicator ────────────────────────
+    _checks = {
+        "A · Business Targets":    st.session_state.inp_revenue != 1_000_000 or st.session_state.inp_deal_size != 5_000,
+        "B · Archetype & Szenario": st.session_state.inp_archetype != "Classic B2B" or st.session_state.inp_scenario != "Base",
+        "C · Conversion Rates":    not st.session_state.inp_cr_df.equals(make_cr_df(st.session_state.inp_archetype)),
+        "D · Saisonalität":        st.session_state.inp_season != "Flat",
+        "E · Channel Mix":         True,  # always counts — user has seen it
+        "F · Simulation":          st.session_state.inp_n_sims != 500,
+    }
+    _done  = sum(1 for v in _checks.values() if v)
+    _total = len(_checks)
+    _pct   = int(_done / _total * 100)
+    _bar_color = "#28a745" if _pct == 100 else ("#0066cc" if _pct >= 50 else "#ffc107")
+
+    st.markdown(f"""
+<div style="margin-top:16px;padding:10px 14px;background:#f8f9fa;
+     border-radius:6px;border:1px solid #e9ecef;">
+  <div style="font-size:0.82rem;font-weight:600;color:#444;margin-bottom:6px;">
+    ⚙️ Konfigurationsfortschritt &nbsp;·&nbsp; {_done}/{_total} Bereiche angepasst
+  </div>
+  <div style="background:#e9ecef;border-radius:4px;height:8px;overflow:hidden;">
+    <div style="width:{_pct}%;background:{_bar_color};height:8px;
+         border-radius:4px;transition:width .3s;"></div>
+  </div>
+  <div style="margin-top:6px;font-size:0.75rem;color:#888;">
+    {"&nbsp; ".join(
+        f'<span style="color:{"#28a745" if v else "#aaa"}">{"✓" if v else "○"} {k}</span>'
+        for k, v in _checks.items()
+    )}
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown("")
     st.info(
         "💡 Alle Änderungen hier werden sofort in allen anderen Tabs übernommen.",
         icon="ℹ️"
@@ -848,6 +977,7 @@ with tab_inp:
 # TAB: FUNNEL & BUDGET
 # ══════════════════════════════════════════════════════════════
 with tab1:
+    _settings_bar(archetype, scenario, season_profile, coverage)
     col_funnel, col_budget = st.columns(2)
 
     with col_funnel:
@@ -923,6 +1053,7 @@ with tab1:
 # TAB: MONTE CARLO
 # ══════════════════════════════════════════════════════════════
 with tab2:
+    _settings_bar(archetype, scenario, season_profile, coverage)
     st.subheader("Risk Analysis — Monte Carlo")
     st.caption(f"**{n_sims} Simulationen** · PERT-Verteilungen aus Worst/Base/Best · Cost/MQL ±25 %")
 
@@ -994,6 +1125,7 @@ with tab2:
 # TAB: MONTHLY PLAN
 # ══════════════════════════════════════════════════════════════
 with tab3:
+    _settings_bar(archetype, scenario, season_profile, coverage)
     st.subheader(f"Monthly Plan — {season_profile}")
 
     monthly_data = {
@@ -1036,6 +1168,7 @@ with tab3:
 # TAB: PLAN VS. ACTUAL
 # ══════════════════════════════════════════════════════════════
 with tab4:
+    _settings_bar(archetype, scenario, season_profile, coverage)
     st.subheader("Plan vs. Actual")
     st.caption("Trage deine monatlichen Ist-Werte ein. Oder lade Musterdaten zum Ausprobieren.")
 
@@ -1045,6 +1178,22 @@ with tab4:
     # Sep–Nov: starker Herbst, Dez: Jahresendspurt (Ø ≈ 100 % des Plans)
     SAMPLE_MULT = [0.88, 1.05, 1.16, 0.91, 0.97, 1.06,
                    0.80, 0.76, 1.14, 1.20, 1.10, 0.97]
+
+    # ── #32 Empty state ───────────────────────────────────────
+    _actual_filled = st.session_state.actual_df["Actual MQLs"].sum() > 0
+    if not _actual_filled:
+        st.markdown(
+            """<div style="background:#fff8e1;border-left:3px solid #ffc107;
+            padding:12px 16px;border-radius:4px;margin-bottom:12px;">
+            📋 <b>Noch keine Ist-Daten vorhanden.</b>
+            Trage deine monatlichen Werte direkt in die Tabelle ein —
+            oder klicke auf <b>📥 Musterdaten laden</b> für einen realistischen Jahresverlauf
+            (inkl. Sommerdip und Q4-Stärke) zum Ausprobieren.
+            <br><small style="color:#888;">No actuals yet. Enter your monthly figures in the table below,
+            or load sample data to explore the feature.</small>
+            </div>""",
+            unsafe_allow_html=True,
+        )
 
     ctrl1, ctrl2, ctrl3 = st.columns([2, 1, 1])
     with ctrl1:
@@ -1168,6 +1317,7 @@ with tab4:
 # TAB: CHANNELS (Ergebnis-Ansicht)
 # ══════════════════════════════════════════════════════════════
 with tab5:
+    _settings_bar(archetype, scenario, season_profile, coverage)
     st.subheader("Channel-Ergebnisse")
     st.caption("Inputs (Cost per MQL, Share) änderst du im **⚙️ Inputs**-Tab → Abschnitt E.")
 
