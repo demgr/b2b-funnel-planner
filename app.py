@@ -1405,6 +1405,84 @@ The result is a **distribution, not a single number**:
                 rows_en += f"| **{term}** | {en} |\n"
             st.markdown(rows_en)
 
+    # ── Power Features ────────────────────────────────────────
+    with st.expander("✨ Power Features & Hidden Gems"):
+        st.markdown("*DE: Kleine Dinge, die einen großen Unterschied machen. · EN: Small things that make a big difference.*")
+        st.markdown("")
+
+        features = [
+            (
+                "🎥", "Screencast aufnehmen",
+                "Drei-Punkte-Menü oben rechts (⋮) → **Record a screencast** — direkt im Browser, kein Extra-Tool nötig. Perfekt für Demo-Videos oder kurze Erklärungen für Kollegen.",
+                "Record a screencast",
+                "Three-dot menu top right (⋮) → **Record a screencast** — right in the browser, no extra tool needed. Perfect for demo videos or quick walkthroughs for colleagues.",
+            ),
+            (
+                "📥", "Excel & PDF Export",
+                "Sidebar aufklappen (Pfeil links) → **📥 Excel exportieren** (4 Sheets) oder **📄 PDF exportieren** (1-seitiger Report). Dateiname enthält automatisch das Tagesdatum.",
+                "Excel & PDF Export",
+                "Open the sidebar (arrow on the left) → **📥 Excel Export** (4 sheets) or **📄 PDF Export** (1-page report). Filename automatically includes today's date.",
+            ),
+            (
+                "📊", "Interaktive Charts",
+                "Alle Charts sind vollständig interaktiv: Zoomen, Panning, Hover-Tooltips mit genauen Werten, Legenden ein-/ausblenden. Kamera-Icon in der Chart-Toolbar → Chart als **PNG herunterladen**.",
+                "Interactive Charts",
+                "All charts are fully interactive: zoom, pan, hover tooltips with exact values, toggle legend entries. Camera icon in the chart toolbar → download chart as **PNG**.",
+            ),
+            (
+                "📋", "Tabellen als CSV",
+                "Über jede Datentabelle hovern → kleines Download-Icon erscheint oben rechts → direkt als **CSV exportieren**, ohne Extra-Button.",
+                "Tables as CSV",
+                "Hover over any data table → a small download icon appears top right → export directly as **CSV**, no extra button needed.",
+            ),
+            (
+                "🌙", "Dark Mode",
+                "Drei-Punkte-Menü (⋮) → **Settings** → Theme umschalten zwischen Hell und Dunkel.",
+                "Dark Mode",
+                "Three-dot menu (⋮) → **Settings** → toggle between light and dark theme.",
+            ),
+            (
+                "↔️", "Sidebar ein-/ausklappen",
+                "Pfeil am linken Rand — gibt mehr Platz für Charts. Die KPIs (Revenue, Budget, Coverage) bleiben jederzeit erreichbar.",
+                "Collapse / expand sidebar",
+                "Arrow on the left edge — gives more space for charts. KPIs (Revenue, Budget, Coverage) remain accessible at any time.",
+            ),
+            (
+                "🔗", "Direktlink teilen",
+                "Die Streamlit-Cloud-URL ist sofort teilbar — **kein Login nötig** für Empfänger. Link kopieren und an Stakeholder schicken.",
+                "Share a direct link",
+                "The Streamlit Cloud URL is instantly shareable — **no login required** for recipients. Copy and send to stakeholders.",
+            ),
+            (
+                "📱", "Mobile-tauglich",
+                "Die App läuft auch im Smartphone-Browser — gut für schnelle Checks unterwegs oder Präsentationen vom Tablet.",
+                "Mobile-friendly",
+                "The app runs in any mobile browser — great for quick checks on the go or tablet presentations.",
+            ),
+            (
+                "🔄", "Live-Berechnung",
+                "Jede Eingabe löst sofort eine Neuberechnung aus — kein 'Berechnen'-Button nötig. Änderungen in CRs oder Budget sind in Echtzeit in allen Tabs sichtbar.",
+                "Live recalculation",
+                "Every input instantly triggers a full recalculation — no 'Calculate' button needed. Changes to CRs or budget are reflected across all tabs in real time.",
+            ),
+            (
+                "📂", "Musterdaten laden",
+                "Im Tab **📈 Plan vs. Actual** → Button **'Musterdaten laden'** — füllt ein realistisches Jahresprofil (inkl. Sommerdip, Q4-Stärke) als Startpunkt.",
+                "Load sample data",
+                "In the **📈 Plan vs. Actual** tab → **'Load sample data'** button — fills a realistic seasonal year profile (summer dip, Q4 strength) as a starting point.",
+            ),
+        ]
+
+        for icon, title_de, text_de, title_en, text_en in features:
+            c_de, c_en = st.columns(2)
+            with c_de:
+                st.markdown(f'<p class="docs-label-de">🇩🇪 {icon} {title_de}</p>', unsafe_allow_html=True)
+                st.markdown(text_de)
+            with c_en:
+                st.markdown(f'<p class="docs-label-en">🇬🇧 {icon} {title_en}</p>', unsafe_allow_html=True)
+                st.markdown(text_en)
+            st.markdown("")
+
     # ── Use Cases ─────────────────────────────────────────────
     with st.expander("💼 Use Cases — Marketing Budget Planning"):
         st.markdown("---")
