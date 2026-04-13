@@ -30,8 +30,8 @@ st.markdown("""
 <style>
     /* ── Metrics ───────────────────────────────────────────── */
     div[data-testid="metric-container"] {
-        background-color: #f8f9fa;
-        border: 1px solid #e9ecef;
+        background-color: var(--secondary-background-color);
+        border: 1px solid rgba(128,128,128,0.2);
         border-radius: 8px;
         padding: 12px 16px;
     }
@@ -41,17 +41,16 @@ st.markdown("""
     div[data-testid="stSidebar"] * { color: #e0e0e0 !important; }
 
     /* ── Headings ──────────────────────────────────────────── */
-    h1 { color: #1a1a2e; }
     .section-header {
         font-size: 1rem; font-weight: 700;
         color: #0066cc; margin-bottom: 4px;
-        border-bottom: 2px solid #e9ecef;
+        border-bottom: 2px solid rgba(128,128,128,0.2);
         padding-bottom: 4px;
     }
 
     /* ── Tab bar container ─────────────────────────────────── */
     div[data-testid="stTabs"] > div:first-child {
-        background-color: #f0f6ff;
+        background-color: var(--secondary-background-color);
         border-radius: 10px 10px 0 0;
         padding: 4px 6px 0 6px;
         border-bottom: 3px solid #0066cc;
@@ -62,11 +61,11 @@ st.markdown("""
     button[data-baseweb="tab"] {
         font-size: 0.88rem !important;
         font-weight: 600 !important;
-        color: #444 !important;
-        background-color: #e2ecf9 !important;
+        color: var(--text-color) !important;
+        background-color: var(--secondary-background-color) !important;
         border-radius: 8px 8px 0 0 !important;
         padding: 10px 18px !important;
-        border: 1px solid #c8d8ee !important;
+        border: 1px solid rgba(128,128,128,0.25) !important;
         border-bottom: none !important;
         margin-right: 2px !important;
         transition: background-color 0.15s, color 0.15s !important;
@@ -74,7 +73,7 @@ st.markdown("""
 
     /* ── Hover state ───────────────────────────────────────── */
     button[data-baseweb="tab"]:hover {
-        background-color: #cfe0f7 !important;
+        background-color: rgba(0,102,204,0.15) !important;
         color: #0066cc !important;
     }
 
@@ -88,8 +87,53 @@ st.markdown("""
 
     /* ── Remove the default Streamlit underline indicator ─── */
     button[data-baseweb="tab"][aria-selected="true"]::after,
-    button[data-baseweb="tab"]::after {
-        display: none !important;
+    button[data-baseweb="tab"]::after { display: none !important; }
+
+    /* ── Docs: theme-aware boxes ───────────────────────────── */
+    .docs-de {
+        background: rgba(0,102,204,0.08);
+        border-left: 3px solid #0066cc;
+        padding: 10px 14px; border-radius: 4px; margin-bottom: 6px;
+        color: var(--text-color);
+    }
+    .docs-en {
+        background: var(--secondary-background-color);
+        border-left: 3px solid rgba(128,128,128,0.4);
+        padding: 10px 14px; border-radius: 4px; margin-bottom: 12px;
+        color: var(--text-color);
+    }
+    .docs-label-de {
+        font-size: 0.72rem; font-weight: 700; color: #0066cc;
+        text-transform: uppercase; letter-spacing: .05em;
+    }
+    .docs-label-en {
+        font-size: 0.72rem; font-weight: 700;
+        color: var(--text-color); opacity: 0.55;
+        text-transform: uppercase; letter-spacing: .05em;
+    }
+
+    /* ── Settings bar & custom boxes: theme-aware ──────────── */
+    .theme-box {
+        background: var(--secondary-background-color);
+        border-left: 4px solid #0066cc;
+        color: var(--text-color);
+        padding: 7px 16px; border-radius: 4px; margin-bottom: 14px;
+        font-size: 0.82rem; display: flex; gap: 20px;
+        flex-wrap: wrap; align-items: center;
+    }
+    .theme-box span { color: var(--text-color) !important; }
+    .theme-box .accent { color: #0066cc !important; }
+    .theme-box .muted { opacity: 0.55; font-size: 0.74rem; margin-left: auto; }
+    .theme-card {
+        background: var(--secondary-background-color);
+        border-radius: 6px; border: 1px solid rgba(128,128,128,0.2);
+        color: var(--text-color); padding: 10px 14px; margin-top: 16px;
+    }
+    .theme-warn {
+        background: rgba(255,193,7,0.12);
+        border-left: 3px solid #ffc107;
+        padding: 12px 16px; border-radius: 4px; margin-bottom: 12px;
+        color: var(--text-color);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -227,16 +271,14 @@ def _settings_bar(archetype, scenario, season_profile, coverage):
     cov_icon = "🟢" if coverage >= 0.9 else ("🟡" if coverage >= 0.6 else "🔴")
     scen_badge = {"Worst": "#dc3545", "Base": "#0066cc", "Best": "#28a745"}.get(scenario, "#0066cc")
     st.markdown(
-        f"""<div style="background:#e8f0fe;border-left:4px solid #0066cc;
-        padding:7px 16px;border-radius:4px;font-size:0.82rem;margin-bottom:14px;
-        display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
-        <span style="color:#1a1a2e;font-weight:600;">🏗️ Archetype: <span style="color:#0066cc;">{archetype}</span></span>
-        <span style="color:#1a1a2e;font-weight:600;">📊 Szenario:
+        f"""<div class="theme-box">
+        <span style="font-weight:600;">🏗️ Archetype: <span class="accent">{archetype}</span></span>
+        <span style="font-weight:600;">📊 Szenario:
           <span style="background:{scen_badge};color:#fff;padding:1px 7px;border-radius:10px;font-size:0.78rem;">{scenario}</span>
         </span>
-        <span style="color:#1a1a2e;font-weight:600;">📅 Saisonalität: <span style="color:#444;">{season_profile}</span></span>
-        <span style="color:#1a1a2e;font-weight:600;">{cov_icon} Coverage: <span style="color:#444;">{coverage:.0%}</span></span>
-        <span style="color:#666;font-size:0.74rem;margin-left:auto;">← ⚙️ Inputs-Tab zum Ändern</span>
+        <span style="font-weight:600;">📅 Saisonalität: {season_profile}</span>
+        <span style="font-weight:600;">{cov_icon} Coverage: {coverage:.0%}</span>
+        <span class="muted">← ⚙️ Inputs-Tab zum Ändern</span>
         </div>""",
         unsafe_allow_html=True,
     )
@@ -998,18 +1040,17 @@ with tab_inp:
     _bar_color = "#28a745" if _pct == 100 else ("#0066cc" if _pct >= 50 else "#ffc107")
 
     st.markdown(f"""
-<div style="margin-top:16px;padding:10px 14px;background:#f8f9fa;
-     border-radius:6px;border:1px solid #e9ecef;">
-  <div style="font-size:0.82rem;font-weight:600;color:#444;margin-bottom:6px;">
+<div class="theme-card" style="margin-top:16px;">
+  <div style="font-size:0.82rem;font-weight:600;margin-bottom:6px;">
     ⚙️ Konfigurationsfortschritt &nbsp;·&nbsp; {_done}/{_total} Bereiche angepasst
   </div>
-  <div style="background:#e9ecef;border-radius:4px;height:8px;overflow:hidden;">
+  <div style="background:rgba(128,128,128,0.15);border-radius:4px;height:8px;overflow:hidden;">
     <div style="width:{_pct}%;background:{_bar_color};height:8px;
          border-radius:4px;transition:width .3s;"></div>
   </div>
-  <div style="margin-top:6px;font-size:0.75rem;color:#888;">
+  <div style="margin-top:6px;font-size:0.75rem;opacity:0.7;">
     {"&nbsp; ".join(
-        f'<span style="color:{"#28a745" if v else "#aaa"}">{"✓" if v else "○"} {k}</span>'
+        f'<span style="color:{"#28a745" if v else "inherit"};opacity:{"1" if v else "0.45"}">{"✓" if v else "○"} {k}</span>'
         for k, v in _checks.items()
     )}
   </div>
@@ -1370,13 +1411,12 @@ with tab4:
     _actual_filled = st.session_state.actual_df["Actual MQLs"].sum() > 0
     if not _actual_filled:
         st.markdown(
-            """<div style="background:#fff8e1;border-left:3px solid #ffc107;
-            padding:12px 16px;border-radius:4px;margin-bottom:12px;">
+            """<div class="theme-warn">
             📋 <b>Noch keine Ist-Daten vorhanden.</b>
             Trage deine monatlichen Werte direkt in die Tabelle ein —
             oder klicke auf <b>📥 Musterdaten laden</b> für einen realistischen Jahresverlauf
             (inkl. Sommerdip und Q4-Stärke) zum Ausprobieren.
-            <br><small style="color:#888;">No actuals yet. Enter your monthly figures in the table below,
+            <br><small style="opacity:0.65;">No actuals yet. Enter your monthly figures in the table below,
             or load sample data to explore the feature.</small>
             </div>""",
             unsafe_allow_html=True,
