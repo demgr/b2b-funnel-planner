@@ -694,7 +694,7 @@ elif coverage >= 0.6:
     )
 else:
     st.error(
-        f"🔴 **Kritische Budget-Lücke** — nur {coverage:.0%} Deckungsgrad. "
+        f"**Kritische Budget-Lücke** — nur {coverage:.0%} Deckungsgrad. "
         f"Es fehlen €{abs(budget_gap):,.0f} ({(1-coverage):.0%} des Bedarfs). "
         f"Empfehlung: Umsatzziel anpassen, Deal Size erhöhen oder Budget aufstocken.",
         icon="🔴"
@@ -1182,105 +1182,128 @@ with tab2:
         paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=0, r=0, t=50, b=0))
     st.plotly_chart(fig_hist, use_container_width=True)
 
-    # ── Risiko-Korridor (neu) ─────────────────────────────────
+    # ── Risiko-Korridor — normalisiert ───────────────────────
     st.subheader("Risiko-Korridor")
     st.caption(
-        "Jeder Balken zeigt die Spanne der simulierten Werte. "
-        "🟢 **P10** = optimistisches Szenario (10 % der Läufe darunter) · "
-        "🔵 **P50** = wahrscheinlichster Wert (Median) · "
-        "🟠 **P90** = konservative Planungsbasis (90 % der Läufe darunter)"
+        "Jede Metrik hat ihre eigene Skala (0 % = P10, 100 % = P90). "
+        "Ein **enger Korridor** bedeutet hohe Planungssicherheit — ein **breiter** hohes Risiko. "
+        "🟢 P10 = optimistisch · 🔵 P50 = wahrscheinlichster Wert · 🟠 P90 = konservative Planungsbasis"
     )
 
     corridor_items = [
-        ("Deals",                          "deals"),
-        (f"{stage_names[5]} (Leads)",      "stage5"),
-        (f"{stage_names[4]} (MQLs)",       "stage4"),
-        ("Required Budget (€)",            "budget_req"),
+        ("Deals",                      "deals"),
+        (f"{stage_names[5]} (Leads)",  "stage5"),
+        (f"{stage_names[4]} (MQLs)",   "stage4"),
+        ("Required Budget (€)",        "budget_req"),
     ]
 
     fig_corridor = go.Figure()
     labels_order = []
+    legend_added = False
 
-    for i, (label, col_name) in enumerate(corridor_items):
+    for label, col_name in corridor_items:
         p10c = float(np.percentile(mc_df[col_name], 10))
         p50c = float(np.percentile(mc_df[col_name], 50))
         p90c = float(np.percentile(mc_df[col_name], 90))
         labels_order.append(label)
 
-        # Full range bar P10→P90 (light gray background)
+        # Normalise: P10 → 0 %, P90 → 100 %
+        spread = (p90c - p10c) if p90c > p10c else 1
+        p50_norm = (p50c - p10c) / spread * 100   # position of P50 within corridor
+
+        # Uncertainty label: spread as % of P50
+        uncert_pct = spread / p50c * 100 if p50c > 0 else 0
+        uncert_label = (
+            "🟢 eng"   if uncert_pct < 30 else
+            "🟡 mittel" if uncert_pct < 70 else
+            "🔴 breit"
+        )
+
+        show_leg = not legend_added
+
+        # Gray background 0 → 100
         fig_corridor.add_trace(go.Scatter(
-            x=[p10c, p90c], y=[label, label],
-            mode="lines",
-            line=dict(color="#dee2e6", width=14),
+            x=[0, 100], y=[label, label], mode="lines",
+            line=dict(color="#e9ecef", width=16),
             showlegend=False, hoverinfo="skip",
         ))
-        # Optimistic zone P10→P50 (green)
+        # Green zone 0 → P50_norm
         fig_corridor.add_trace(go.Scatter(
-            x=[p10c, p50c], y=[label, label],
-            mode="lines",
-            line=dict(color="#28a745", width=14),
-            opacity=0.55,
-            name="P10 → P50 (optimistisch)" if i == 0 else None,
-            showlegend=(i == 0),
+            x=[0, p50_norm], y=[label, label], mode="lines",
+            line=dict(color="#28a745", width=16), opacity=0.5,
+            name="← P10 bis P50 (optimistisch)", showlegend=show_leg,
             hoverinfo="skip",
         ))
-        # Conservative zone P50→P90 (orange)
+        # Orange zone P50_norm → 100
         fig_corridor.add_trace(go.Scatter(
-            x=[p50c, p90c], y=[label, label],
-            mode="lines",
-            line=dict(color="#fd7e14", width=14),
-            opacity=0.55,
-            name="P50 → P90 (konservativ)" if i == 0 else None,
-            showlegend=(i == 0),
+            x=[p50_norm, 100], y=[label, label], mode="lines",
+            line=dict(color="#fd7e14", width=16), opacity=0.5,
+            name="P50 bis P90 → (konservativ)", showlegend=show_leg,
             hoverinfo="skip",
         ))
-        # P10 endpoint + label
+        legend_added = True
+
+        # P10 marker + actual value below
         fig_corridor.add_trace(go.Scatter(
-            x=[p10c], y=[label],
-            mode="markers+text",
-            marker=dict(size=11, color="#28a745", symbol="circle",
-                        line=dict(color="white", width=1.5)),
+            x=[0], y=[label], mode="markers+text",
+            marker=dict(size=12, color="#28a745", symbol="circle",
+                        line=dict(color="white", width=2)),
             text=[f"{p10c:,.0f}"],
             textposition="bottom center",
             textfont=dict(size=9, color="#28a745"),
             showlegend=False,
-            hovertemplate=f"<b>P10 {label}</b><br>{p10c:,.0f}<extra></extra>",
+            hovertemplate=f"<b>P10 — {label}</b><br>Wert: {p10c:,.0f}<extra></extra>",
         ))
-        # P50 diamond (most likely) + label
+        # P50 diamond + actual value above
         fig_corridor.add_trace(go.Scatter(
-            x=[p50c], y=[label],
-            mode="markers+text",
+            x=[p50_norm], y=[label], mode="markers+text",
             marker=dict(size=18, color="#0066cc", symbol="diamond",
                         line=dict(color="white", width=2)),
             text=[f"{p50c:,.0f}"],
             textposition="top center",
-            textfont=dict(size=10, color="#0066cc"),
+            textfont=dict(size=10, color="#0066cc", family="Arial Black"),
             showlegend=False,
-            hovertemplate=f"<b>P50 {label}</b><br>{p50c:,.0f}<extra></extra>",
+            hovertemplate=f"<b>P50 — {label}</b><br>Wert: {p50c:,.0f}<br>Position im Korridor: {p50_norm:.0f} %<extra></extra>",
         ))
-        # P90 endpoint + label
+        # P90 marker + actual value below
         fig_corridor.add_trace(go.Scatter(
-            x=[p90c], y=[label],
-            mode="markers+text",
-            marker=dict(size=11, color="#fd7e14", symbol="circle",
-                        line=dict(color="white", width=1.5)),
+            x=[100], y=[label], mode="markers+text",
+            marker=dict(size=12, color="#fd7e14", symbol="circle",
+                        line=dict(color="white", width=2)),
             text=[f"{p90c:,.0f}"],
             textposition="bottom center",
             textfont=dict(size=9, color="#fd7e14"),
             showlegend=False,
-            hovertemplate=f"<b>P90 {label}</b><br>{p90c:,.0f}<extra></extra>",
+            hovertemplate=f"<b>P90 — {label}</b><br>Wert: {p90c:,.0f}<extra></extra>",
         ))
+        # Uncertainty badge — right-aligned annotation
+        fig_corridor.add_annotation(
+            x=106, y=label,
+            text=f"<b>{uncert_label}</b> ({uncert_pct:.0f} %)",
+            showarrow=False,
+            font=dict(size=10, color="#555"),
+            xanchor="left",
+        )
 
     fig_corridor.update_layout(
-        height=340,
+        height=320,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=10, r=30, t=10, b=20),
-        legend=dict(orientation="h", y=1.08, x=0,
+        margin=dict(l=10, r=140, t=10, b=30),
+        legend=dict(orientation="h", y=1.10, x=0,
                     font=dict(size=11), bgcolor="rgba(0,0,0,0)"),
-        xaxis=dict(showgrid=True, gridcolor="#f0f0f0", zeroline=False),
-        yaxis=dict(categoryorder="array", categoryarray=labels_order,
-                   tickfont=dict(size=12, color="#333")),
+        xaxis=dict(
+            range=[-3, 106],
+            tickvals=[0, 25, 50, 75, 100],
+            ticktext=["P10<br>(0 %)", "25 %", "P50<br>(Median)", "75 %", "P90<br>(100 %)"],
+            showgrid=True, gridcolor="#f0f0f0", zeroline=False,
+            tickfont=dict(size=10, color="#888"),
+        ),
+        yaxis=dict(
+            categoryorder="array",
+            categoryarray=labels_order,
+            tickfont=dict(size=12, color="#333"),
+        ),
     )
     st.plotly_chart(fig_corridor, use_container_width=True)
 
