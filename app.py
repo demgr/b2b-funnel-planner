@@ -1133,41 +1133,155 @@ with tab2:
         else:
             st.error(f"🔴 Budget zu knapp in {1-prob_ok:.0%} der Szenarien.")
 
+    # ── Histograms ────────────────────────────────────────────
+    p10_mql = float(np.percentile(mc_df["stage4"], 10))
+    p50_mql = float(np.percentile(mc_df["stage4"], 50))
+    p90_mql = float(np.percentile(mc_df["stage4"], 90))
+
     fig_hist = make_subplots(rows=1, cols=2,
-        subplot_titles=["Required Budget", f"{stage_names[4]}"],
-        horizontal_spacing=0.08)
+        subplot_titles=[f"Required Budget — Verteilung über {n_sims} Szenarien",
+                        f"{stage_names[4]} — Verteilung über {n_sims} Szenarien"],
+        horizontal_spacing=0.10)
+
+    # Left: Budget histogram
     fig_hist.add_trace(go.Histogram(x=mc_df["budget_req"], nbinsx=40,
-        marker_color="#0066cc", opacity=0.75, name="Budget"), row=1, col=1)
-    fig_hist.add_vline(x=available_budget, line_dash="dash", line_color="#dc3545",
-        annotation_text=f"Verfügbar €{available_budget:,.0f}", row=1, col=1)
-    fig_hist.add_vline(x=p50_b, line_dash="dot", line_color="#28a745",
-        annotation_text=f"Median €{p50_b:,.0f}", row=1, col=1)
+        marker_color="#0066cc", opacity=0.75, name="Budget",
+        hovertemplate="Budget: €%{x:,.0f}<br>Anzahl: %{y}"), row=1, col=1)
+    fig_hist.add_vline(x=available_budget, line_dash="dash", line_color="#dc3545", line_width=2,
+        annotation_text=f"Verfügbar €{available_budget:,.0f}",
+        annotation_font_color="#dc3545", annotation_font_size=11, row=1, col=1)
+    fig_hist.add_vline(x=p10_b, line_dash="dot", line_color="#28a745", line_width=1.5,
+        annotation_text=f"P10 €{p10_b:,.0f}",
+        annotation_font_color="#28a745", annotation_font_size=10,
+        annotation_position="top left", row=1, col=1)
+    fig_hist.add_vline(x=p50_b, line_dash="dot", line_color="#0066cc", line_width=2,
+        annotation_text=f"P50 €{p50_b:,.0f}",
+        annotation_font_color="#0066cc", annotation_font_size=11, row=1, col=1)
+    fig_hist.add_vline(x=p90_b, line_dash="dot", line_color="#fd7e14", line_width=1.5,
+        annotation_text=f"P90 €{p90_b:,.0f}",
+        annotation_font_color="#fd7e14", annotation_font_size=10,
+        annotation_position="top right", row=1, col=1)
+
+    # Right: MQL histogram
     fig_hist.add_trace(go.Histogram(x=mc_df["stage4"], nbinsx=40,
-        marker_color="#28a745", opacity=0.75, name="MQLs"), row=1, col=2)
-    fig_hist.update_layout(height=340, showlegend=False,
-        paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=0, r=0, t=40, b=0))
+        marker_color="#28a745", opacity=0.75, name="MQLs",
+        hovertemplate="MQLs: %{x:,.0f}<br>Anzahl: %{y}"), row=1, col=2)
+    fig_hist.add_vline(x=p10_mql, line_dash="dot", line_color="#28a745", line_width=1.5,
+        annotation_text=f"P10 {p10_mql:,.0f}",
+        annotation_font_color="#28a745", annotation_font_size=10,
+        annotation_position="top left", row=1, col=2)
+    fig_hist.add_vline(x=p50_mql, line_dash="dot", line_color="#0066cc", line_width=2,
+        annotation_text=f"P50 {p50_mql:,.0f}",
+        annotation_font_color="#0066cc", annotation_font_size=11, row=1, col=2)
+    fig_hist.add_vline(x=p90_mql, line_dash="dot", line_color="#fd7e14", line_width=1.5,
+        annotation_text=f"P90 {p90_mql:,.0f}",
+        annotation_font_color="#fd7e14", annotation_font_size=10,
+        annotation_position="top right", row=1, col=2)
+
+    fig_hist.update_layout(height=360, showlegend=False,
+        paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=0, r=0, t=50, b=0))
     st.plotly_chart(fig_hist, use_container_width=True)
 
+    # ── Risiko-Korridor (neu) ─────────────────────────────────
     st.subheader("Risiko-Korridor")
-    corridor_items = [("Required Budget (€)", "budget_req"),
-                      (f"{stage_names[4]}", "stage4"),
-                      (f"{stage_names[5]}", "stage5"), ("Deals", "deals")]
+    st.caption(
+        "Jeder Balken zeigt die Spanne der simulierten Werte. "
+        "🟢 **P10** = optimistisches Szenario (10 % der Läufe darunter) · "
+        "🔵 **P50** = wahrscheinlichster Wert (Median) · "
+        "🟠 **P90** = konservative Planungsbasis (90 % der Läufe darunter)"
+    )
+
+    corridor_items = [
+        ("Deals",                          "deals"),
+        (f"{stage_names[5]} (Leads)",      "stage5"),
+        (f"{stage_names[4]} (MQLs)",       "stage4"),
+        ("Required Budget (€)",            "budget_req"),
+    ]
+
     fig_corridor = go.Figure()
-    for label, col_name in corridor_items:
+    labels_order = []
+
+    for i, (label, col_name) in enumerate(corridor_items):
         p10c = float(np.percentile(mc_df[col_name], 10))
         p50c = float(np.percentile(mc_df[col_name], 50))
         p90c = float(np.percentile(mc_df[col_name], 90))
+        labels_order.append(label)
+
+        # Full range bar P10→P90 (light gray background)
         fig_corridor.add_trace(go.Scatter(
-            x=[p10c, p50c, p90c], y=[label, label, label],
-            mode="lines+markers+text",
-            line=dict(color="#0066cc", width=3),
-            marker=dict(size=[8, 14, 8], color=["#adb5bd", "#0066cc", "#adb5bd"]),
-            text=[f"P10: {p10c:,.0f}", f"P50: {p50c:,.0f}", f"P90: {p90c:,.0f}"],
-            textposition=["bottom center", "top center", "bottom center"],
-            textfont=dict(size=10), showlegend=False,
+            x=[p10c, p90c], y=[label, label],
+            mode="lines",
+            line=dict(color="#dee2e6", width=14),
+            showlegend=False, hoverinfo="skip",
         ))
-    fig_corridor.update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=0, r=0, t=10, b=0))
+        # Optimistic zone P10→P50 (green)
+        fig_corridor.add_trace(go.Scatter(
+            x=[p10c, p50c], y=[label, label],
+            mode="lines",
+            line=dict(color="#28a745", width=14),
+            opacity=0.55,
+            name="P10 → P50 (optimistisch)" if i == 0 else None,
+            showlegend=(i == 0),
+            hoverinfo="skip",
+        ))
+        # Conservative zone P50→P90 (orange)
+        fig_corridor.add_trace(go.Scatter(
+            x=[p50c, p90c], y=[label, label],
+            mode="lines",
+            line=dict(color="#fd7e14", width=14),
+            opacity=0.55,
+            name="P50 → P90 (konservativ)" if i == 0 else None,
+            showlegend=(i == 0),
+            hoverinfo="skip",
+        ))
+        # P10 endpoint + label
+        fig_corridor.add_trace(go.Scatter(
+            x=[p10c], y=[label],
+            mode="markers+text",
+            marker=dict(size=11, color="#28a745", symbol="circle",
+                        line=dict(color="white", width=1.5)),
+            text=[f"{p10c:,.0f}"],
+            textposition="bottom center",
+            textfont=dict(size=9, color="#28a745"),
+            showlegend=False,
+            hovertemplate=f"<b>P10 {label}</b><br>{p10c:,.0f}<extra></extra>",
+        ))
+        # P50 diamond (most likely) + label
+        fig_corridor.add_trace(go.Scatter(
+            x=[p50c], y=[label],
+            mode="markers+text",
+            marker=dict(size=18, color="#0066cc", symbol="diamond",
+                        line=dict(color="white", width=2)),
+            text=[f"{p50c:,.0f}"],
+            textposition="top center",
+            textfont=dict(size=10, color="#0066cc"),
+            showlegend=False,
+            hovertemplate=f"<b>P50 {label}</b><br>{p50c:,.0f}<extra></extra>",
+        ))
+        # P90 endpoint + label
+        fig_corridor.add_trace(go.Scatter(
+            x=[p90c], y=[label],
+            mode="markers+text",
+            marker=dict(size=11, color="#fd7e14", symbol="circle",
+                        line=dict(color="white", width=1.5)),
+            text=[f"{p90c:,.0f}"],
+            textposition="bottom center",
+            textfont=dict(size=9, color="#fd7e14"),
+            showlegend=False,
+            hovertemplate=f"<b>P90 {label}</b><br>{p90c:,.0f}<extra></extra>",
+        ))
+
+    fig_corridor.update_layout(
+        height=340,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=10, r=30, t=10, b=20),
+        legend=dict(orientation="h", y=1.08, x=0,
+                    font=dict(size=11), bgcolor="rgba(0,0,0,0)"),
+        xaxis=dict(showgrid=True, gridcolor="#f0f0f0", zeroline=False),
+        yaxis=dict(categoryorder="array", categoryarray=labels_order,
+                   tickfont=dict(size=12, color="#333")),
+    )
     st.plotly_chart(fig_corridor, use_container_width=True)
 
 
