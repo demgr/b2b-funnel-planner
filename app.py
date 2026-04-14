@@ -2045,23 +2045,35 @@ with tab_docs:
         with c_de:
             st.markdown('<p class="docs-label-de">🇩🇪 Deutsch</p>', unsafe_allow_html=True)
             st.markdown("""
-**1. ⚙️ Inputs öffnen**
-Umsatzziel, Ø Deal Size und verfügbares Marketingbudget eingeben.
+**Empfohlen: 🧙 Setup-Wizard**
+Der einfachste Einstieg — führt dich in 5 Schritten durch die komplette Konfiguration: Umsatzziel, Funnel-Typ, Conversion Rates, Channel Mix und historische Ist-Daten. Am Ende ist alles gespeichert und du kannst direkt in die Analyse-Tabs wechseln.
 
-**2. Funnel-Archetype wählen**
-Classic B2B, Enterprise, SaaS/PLG oder Channel/Partner — passend zu eurem Vertriebsmodell. Die Conversion Rates werden automatisch vorbelegt.
+---
+
+**Alternativ: direkt zum ⚙️ Inputs-Tab**
+
+**1. Umsatzziel, Ø Deal Size und Marketingbudget eingeben** (Abschnitt A)
+
+**2. Funnel-Archetype wählen** (Abschnitt B)
+Classic B2B, Enterprise, SaaS/PLG, Channel/Partner — oder **Custom (eigener Funnel)** mit frei definierten Stufen-Namen.
 
 **3. Tabs durchklicken**
-Die App berechnet sofort: Wie viele MQLs, Deals und wie viel Budget ihr braucht — inklusive Risikobewertung, Monatsplan und Kanal-Allokation.
+Die App berechnet sofort wie viele MQLs, Deals und wie viel Budget du brauchst — inklusive Risiko, Monatsplan und Kanal-Allokation.
 """)
         with c_en:
             st.markdown('<p class="docs-label-en">🇬🇧 English</p>', unsafe_allow_html=True)
             st.markdown("""
-**1. Open ⚙️ Inputs**
-Enter your revenue target, average deal size, and available marketing budget.
+**Recommended: 🧙 Setup Wizard**
+The easiest starting point — walks you through 5 steps: revenue target, funnel type, conversion rates, channel mix, and historical actuals. Everything is saved at the end and you can jump straight into the analysis tabs.
 
-**2. Choose a funnel archetype**
-Classic B2B, Enterprise, SaaS/PLG, or Channel/Partner — matching your sales motion. Conversion rates are pre-filled automatically.
+---
+
+**Alternative: go directly to ⚙️ Inputs**
+
+**1. Enter revenue target, avg. deal size, and marketing budget** (Section A)
+
+**2. Choose a funnel archetype** (Section B)
+Classic B2B, Enterprise, SaaS/PLG, Channel/Partner — or **Custom (your own funnel)** with freely named stages.
 
 **3. Explore the tabs**
 The app instantly calculates how many MQLs, deals, and how much budget you need — including risk assessment, monthly plan, and channel allocation.
@@ -2120,19 +2132,38 @@ The result is a **distribution, not a single number**:
         st.markdown("""
 | Tab | DE — Was du siehst & wofür | EN — What you see & why |
 |-----|---------------------------|-------------------------|
-| ⚙️ **Inputs** | Alle Eingabefelder: Ziele, Archetype, CRs, Saisonalität, Kanäle | All input fields: targets, archetype, CRs, seasonality, channels |
+| 🧙 **Setup-Wizard** | Geführter 5-Schritte-Einstieg: Ziel → Funnel → CRs → Kanäle → Ist-Daten | Guided 5-step onboarding: target → funnel → CRs → channels → actuals |
+| ⚙️ **Inputs** | Alle Eingabefelder im Detail — inkl. Custom Funnel-Stufen, Saisonalität, Simulation | All input fields in detail — incl. custom funnel stages, seasonality, simulation |
 | 🔻 **Funnel & Budget** | Trichter-Grafik, Budget-Gauge, Kanal-Donut — Gesamtbild auf einen Blick | Funnel chart, budget gauge, channel donut — full picture at a glance |
-| 🎲 **Risk / Monte Carlo** | Histogramm, P10/P50/P90 — Wie sicher ist der Plan? | Histogram, P10/P50/P90 — how robust is the plan? |
+| 🎲 **Risk / Monte Carlo** | Histogramm, P10/P50/P90 — Wie robust ist der Plan? | Histogram, P10/P50/P90 — how robust is the plan? |
 | 📅 **Monthly Plan** | Monatstabelle + saisonaler Verlauf — Wann brauche ich was? | Monthly table + seasonal curve — when do you need what? |
-| 📈 **Plan vs. Actual** | Soll-Ist-Vergleich — Abweichungen tracken | Plan vs. actual comparison — track variance month by month |
+| 📈 **Plan vs. Actual** | Soll-Ist-Vergleich — Abweichungen monatlich tracken | Plan vs. actual comparison — track variance month by month |
 | 📡 **Channels** | Spend-Verteilung pro Kanal — Budget-Allokation optimieren | Spend breakdown per channel — optimize budget allocation |
-| 📖 **Docs** | Diese Dokumentation / This documentation | Diese Dokumentation / This documentation |
+| 📖 **Docs** | Diese Dokumentation / This documentation | This documentation / Diese Dokumentation |
 """)
         st.caption("💡 DE: Sidebar aufklappen für kompakte KPIs + Excel/PDF-Export. · EN: Open the sidebar for compact KPIs and Excel/PDF export.")
 
     # ── FAQ ───────────────────────────────────────────────────
     with st.expander("❓ FAQ / Tipps & Tricks"):
         faqs = [
+            (
+                'Wie starte ich am besten — Wizard oder Inputs-Tab?',
+                '**Erster Start → Wizard empfohlen.** Er führt dich in 5 Schritten durch alles durch und erklärt jeden Bereich. Der ⚙️ Inputs-Tab ist der "Advanced Mode" für schnelle Anpassungen, sobald du die App kennst.',
+                'Where should I start — Wizard or Inputs tab?',
+                '**First time → use the Wizard.** It walks you through all 5 steps with explanations. The ⚙️ Inputs tab is the "advanced mode" for quick tweaks once you know the app.',
+            ),
+            (
+                'Wie definiere ich meinen eigenen Funnel?',
+                'Im 🧙 Setup-Wizard → Schritt 2 → "Custom (eigener Funnel)" wählen. Dann alle 7 Stufen frei benennen (z.B. "Prospect", "SAL", "Proposal", "Closed Won"). Alternativ im ⚙️ Inputs-Tab → Abschnitt B → Custom wählen → Expander "Eigene Funnel-Stufen-Namen bearbeiten".',
+                'How do I define my own custom funnel?',
+                'In 🧙 Setup Wizard → Step 2 → select "Custom (your own funnel)". Name all 7 stages freely (e.g. "Prospect", "SAL", "Proposal", "Closed Won"). Alternatively, in ⚙️ Inputs → Section B → select Custom → expand "Edit funnel stage names".',
+            ),
+            (
+                'Wie trage ich historische Ist-Daten ein?',
+                'Zwei Wege: (1) Im 🧙 Setup-Wizard → Schritt 5 direkt eintragen. (2) Im Tab **📈 Plan vs. Actual** → Tabelle direkt editieren (MQLs, Deals, Revenue, Budget pro Monat). Beide schreiben in dieselbe Datenstruktur.',
+                'How do I enter historical actuals?',
+                'Two ways: (1) In 🧙 Setup Wizard → Step 5, enter actuals directly. (2) In **📈 Plan vs. Actual** tab → edit the table directly (MQLs, Deals, Revenue, Budget per month). Both write to the same data structure.',
+            ),
             (
                 'Was bedeutet "Budget Coverage"?',
                 'Verhältnis von verfügbarem zu benötigtem Budget. 🟢 ≥ 90 % = gut gedeckt, 🟡 60–90 % = Lücke vorhanden, 🔴 < 60 % = kritisch.',
@@ -2141,15 +2172,15 @@ The result is a **distribution, not a single number**:
             ),
             (
                 'Welchen Funnel-Archetype soll ich wählen?',
-                '**Classic B2B** für Standardvertrieb mit Inside/Field Sales. **Enterprise** wenn Zyklen > 6 Monate. **SaaS/PLG** wenn ein Free-Tier oder Trial existiert. **Channel** wenn Partner den Großteil der Pipeline generieren.',
+                '**Classic B2B** für Standardvertrieb mit Inside/Field Sales. **Enterprise** wenn Zyklen > 6 Monate. **SaaS/PLG** wenn ein Free-Tier oder Trial existiert. **Channel** wenn Partner den Großteil der Pipeline generieren. **Custom** wenn du eigene Stufen-Namen und einen spezifischen Aufbau hast.',
                 'Which funnel archetype should I choose?',
-                '**Classic B2B** for standard inside/field sales. **Enterprise** for cycles >6 months. **SaaS/PLG** if you have a free tier or trial. **Channel** if partners generate most of your pipeline.',
+                '**Classic B2B** for standard inside/field sales. **Enterprise** for cycles >6 months. **SaaS/PLG** if you have a free tier or trial. **Channel** if partners generate most of your pipeline. **Custom** if you have specific stage names or a unique funnel structure.',
             ),
             (
                 'Wie nutze ich "Plan vs. Actual" am besten?',
-                'Monatlich die Ist-Zahlen eintragen — die App zeigt sofort, ob ihr auf Kurs seid. Mit "Musterdaten laden" bekommt ihr einen realistischen Jahresverlauf als Startpunkt.',
+                'Monatlich die Ist-Zahlen eintragen — die App zeigt sofort, ob ihr auf Kurs seid. Mit "Musterdaten laden" bekommt ihr einen realistischen Jahresverlauf als Startpunkt. Den Berichtsmonat (YTD-Grenze) stellst du in Abschnitt F des Inputs-Tabs ein.',
                 'How do I get the most out of "Plan vs. Actual"?',
-                'Enter actuals monthly — the app instantly shows whether you\'re on track. Use "Load sample data" for a realistic seasonal starting point.',
+                'Enter actuals monthly — the app instantly shows whether you\'re on track. Use "Load sample data" for a realistic seasonal starting point. Set the report month (YTD cutoff) in Section F of the Inputs tab.',
             ),
             (
                 'Kann ich den Plan exportieren?',
@@ -2179,6 +2210,9 @@ The result is a **distribution, not a single number**:
     # ── Glossary ──────────────────────────────────────────────
     with st.expander("📚 Glossar / Glossary"):
         glossary = [
+            ("Setup-Wizard",      "Geführter 5-Schritte-Einstieg: Umsatzziel → Funnel-Typ → Conversion Rates → Channel Mix → Ist-Daten", "Guided 5-step onboarding: revenue target → funnel type → conversion rates → channel mix → historical actuals"),
+            ("Custom Funnel",     "Frei definierbarer Funnel-Typ mit eigenen Stufen-Namen — für Businesses mit spezifischem Pipeline-Aufbau", "Freely configurable funnel type with custom stage names — for businesses with a unique pipeline structure"),
+            ("Ist-Daten",         "Monatliche Ist-Zahlen (MQLs, Deals, Revenue, Budget) aus dem laufenden oder vergangenen Jahr — Basis für den Plan-vs.-Actual-Vergleich", "Monthly actuals (MQLs, deals, revenue, budget) from the current or previous year — basis for the plan vs. actual comparison"),
             ("Reverse Funnel",    "Vom Ziel rückwärts rechnen: Umsatz → Deals → MQLs → Budget",            "Working backwards from goal: Revenue → Deals → MQLs → Budget"),
             ("PERT",              "Program Evaluation and Review Technique — gewichtete Drei-Punkt-Schätzung (Worst / Base / Best)", "Weighted three-point estimation method (Worst / Base / Best)"),
             ("Monte Carlo",       "Statistische Simulation mit bis zu 2.000 zufälligen Szenarien zur Risikoabschätzung",             "Statistical simulation using up to 2,000 random scenarios to quantify risk"),
@@ -2214,6 +2248,24 @@ The result is a **distribution, not a single number**:
         st.markdown("")
 
         features = [
+            (
+                "🧙", "Setup-Wizard",
+                "Neuer Benutzer? Starte im **🧙 Setup-Wizard** Tab — er führt dich in 5 Schritten durch die komplette Konfiguration. Am Ende wird alles gespeichert und du kannst direkt in die Analyse-Tabs wechseln. Den Wizard kannst du jederzeit erneut durchlaufen, um Werte zu aktualisieren.",
+                "Setup Wizard",
+                "New user? Start in the **🧙 Setup Wizard** tab — it walks you through 5 steps to complete configuration. Everything is saved at the end and you jump straight into analysis. You can re-run the wizard any time to update your settings.",
+            ),
+            (
+                "✏️", "Eigener Funnel (Custom)",
+                "Im Wizard → Schritt 2 oder im ⚙️ Inputs-Tab → Abschnitt B: **'Custom (eigener Funnel)'** wählen. Dann alle 7 Funnel-Stufen frei benennen — z.B. nach deinen CRM-Phasen. Die eigenen Namen erscheinen sofort in allen Charts, Tabellen und im Export.",
+                "Custom Funnel Stages",
+                "In Wizard → Step 2 or ⚙️ Inputs → Section B: select **'Custom (your own funnel)'**. Then name all 7 funnel stages freely — e.g. matching your CRM stages. Custom names appear instantly across all charts, tables, and exports.",
+            ),
+            (
+                "📅", "Historische Ist-Daten eintragen",
+                "Im Wizard → Schritt 5 oder im Tab **📈 Plan vs. Actual**: die editierbare Tabelle direkt befüllen (kein Upload, kein CSV). Einfach in die Zellen klicken und Werte eintragen — MQLs, Deals, Revenue und Budget pro Monat. Der YTD-Vergleich aktualisiert sich sofort.",
+                "Enter historical actuals",
+                "In Wizard → Step 5 or in **📈 Plan vs. Actual** tab: fill the editable table directly (no upload, no CSV). Just click cells and type — MQLs, Deals, Revenue and Budget per month. The YTD comparison updates immediately.",
+            ),
             (
                 "🎥", "Screencast aufnehmen",
                 "Drei-Punkte-Menü oben rechts (⋮) → **Record a screencast** — direkt im Browser, kein Extra-Tool nötig. Perfekt für Demo-Videos oder kurze Erklärungen für Kollegen.",
