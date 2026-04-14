@@ -174,6 +174,13 @@ FUNNEL_ARCHETYPES = {
         "worst": [20, 35, 20, 10, 2],
         "best":  [40, 70, 50, 30, 7],
     },
+    "Custom (eigener Funnel)": {
+        "labels":      ["Stufe 3→2", "Stufe 4→3", "Stufe 5→4", "Stufe 6→5", "Stufe 7→6"],
+        "stage_names": ["Revenue", "Deals", "Stufe 3", "Stufe 4", "Stufe 5", "Stufe 6", "Touchpoints"],
+        "base":  [25, 40, 30, 15, 2],
+        "worst": [15, 25, 20, 10, 1],
+        "best":  [35, 55, 40, 20, 3],
+    },
 }
 
 SEASONALITY_PROFILES = {
@@ -575,6 +582,9 @@ _DEFAULTS = {
     "inp_custom_season": [1.0] * 12,
     "inp_n_sims":        500,
     "inp_report_month":  "Apr",
+    # Wizard
+    "wizard_step":       0,
+    "wizard_done":       False,
 }
 for k, v in _DEFAULTS.items():
     if k not in st.session_state:
@@ -582,6 +592,11 @@ for k, v in _DEFAULTS.items():
 
 if "inp_cr_df" not in st.session_state:
     st.session_state.inp_cr_df = make_cr_df("Classic B2B")
+
+if "inp_custom_stage_names" not in st.session_state:
+    st.session_state.inp_custom_stage_names = [
+        "Revenue", "Deals", "Opportunities", "SQLs", "MQLs", "Leads", "Touchpoints"
+    ]
 
 if "channels_df" not in st.session_state:
     st.session_state.channels_df = pd.DataFrame(DEFAULT_CHANNELS)
@@ -631,7 +646,10 @@ try:
 except (ZeroDivisionError, ValueError):
     deals = opps = stage3 = stage4 = stage5 = touchpoints = 0.0
 
-stage_names = arch["stage_names"]
+if archetype == "Custom (eigener Funnel)":
+    stage_names = st.session_state.inp_custom_stage_names
+else:
+    stage_names = arch["stage_names"]
 funnel_vals = [revenue_target, deals, opps, stage3, stage4, stage5, touchpoints]
 
 ch_calc        = calc_channel_budget(stage4, st.session_state.channels_df)
@@ -748,7 +766,8 @@ st.divider()
 # TABS
 # ============================================================
 
-tab_inp, tab1, tab2, tab3, tab4, tab5, tab_docs = st.tabs([
+tab_wiz, tab_inp, tab1, tab2, tab3, tab4, tab5, tab_docs = st.tabs([
+    "🧙 Setup-Wizard",
     "⚙️ Inputs",
     "🔻 Funnel & Budget",
     "🎲 Risk / Monte Carlo",
@@ -757,6 +776,374 @@ tab_inp, tab1, tab2, tab3, tab4, tab5, tab_docs = st.tabs([
     "📡 Channels",
     "📖 Docs",
 ])
+
+# ══════════════════════════════════════════════════════════════
+# TAB: SETUP-WIZARD
+# ══════════════════════════════════════════════════════════════
+with tab_wiz:
+
+    WIZARD_STEPS = [
+        "🎯 Umsatzziel",
+        "🏗️ Funnel-Typ",
+        "📊 Conversion Rates",
+        "📡 Channel Mix",
+        "📅 Ist-Daten (optional)",
+    ]
+    _ws = st.session_state.wizard_step
+
+    # ── Wizard fertig-Banner ──────────────────────────────────
+    if st.session_state.wizard_done:
+        st.success(
+            "✅ **Setup abgeschlossen!** Deine Konfiguration ist gespeichert. "
+            "Wechsle zu **🔻 Funnel & Budget** oder einem anderen Tab für die Auswertung.",
+            icon="🎉"
+        )
+        if st.button("🔄 Wizard erneut durchlaufen", key="wiz_restart"):
+            st.session_state.wizard_step = 0
+            st.session_state.wizard_done = False
+            st.rerun()
+        st.divider()
+
+    # ── Schritt-Anzeige ───────────────────────────────────────
+    st.progress((_ws + 1) / len(WIZARD_STEPS),
+                text=f"Schritt {_ws + 1} von {len(WIZARD_STEPS)}: **{WIZARD_STEPS[_ws]}**")
+
+    _step_cols = st.columns(len(WIZARD_STEPS))
+    for _i, (_sc, _sn) in enumerate(zip(_step_cols, WIZARD_STEPS)):
+        if _i == _ws:
+            _sc.markdown(f"<div style='text-align:center;font-weight:700;color:#0066cc;font-size:0.8rem;'>{_sn}</div>",
+                         unsafe_allow_html=True)
+        elif _i < _ws:
+            _sc.markdown(f"<div style='text-align:center;color:#28a745;font-size:0.8rem;'>✓ {_sn}</div>",
+                         unsafe_allow_html=True)
+        else:
+            _sc.markdown(f"<div style='text-align:center;opacity:0.4;font-size:0.8rem;'>{_sn}</div>",
+                         unsafe_allow_html=True)
+
+    st.divider()
+
+    # ══════════════════════════════════════════════════════════
+    # SCHRITT 1: Umsatzziel & Budget
+    # ══════════════════════════════════════════════════════════
+    if _ws == 0:
+        st.subheader("🎯 Was ist dein Umsatzziel?")
+        st.caption(
+            "Starte mit deinen wichtigsten Eckdaten. "
+            "Alle Werte kannst du später jederzeit im ⚙️ Inputs-Tab anpassen."
+        )
+        st.markdown("")
+
+        wz_c1, wz_c2 = st.columns(2)
+        with wz_c1:
+            st.markdown("**Revenue Target (€)**")
+            st.caption("Umsatzziel für die Planungsperiode — z.B. 1.000.000 für 1 Mio. €")
+            wz_rev = st.number_input(
+                "Revenue Target", 10_000, 100_000_000,
+                st.session_state.inp_revenue, 50_000, format="%d",
+                label_visibility="collapsed", key="wz_inp_revenue"
+            )
+            st.markdown("")
+            st.markdown("**Avg. Deal Size (€)**")
+            st.caption("Durchschnittlicher Auftragswert — bestimmt wie viele Deals du brauchst")
+            wz_deal = st.number_input(
+                "Deal Size", 500, 500_000,
+                st.session_state.inp_deal_size, 500, format="%d",
+                label_visibility="collapsed", key="wz_inp_deal"
+            )
+
+        with wz_c2:
+            st.markdown("**Verfügbares Marketing-Budget (€)**")
+            st.caption("Wie viel Budget hast du insgesamt für Marketing zur Verfügung?")
+            wz_budget = st.number_input(
+                "Budget", 0, 20_000_000,
+                st.session_state.inp_budget, 10_000, format="%d",
+                label_visibility="collapsed", key="wz_inp_budget"
+            )
+            st.markdown("")
+            st.markdown("**Planungsszenario**")
+            st.caption("Mit welchem Szenario willst du primär planen?")
+            wz_scenario = st.radio(
+                "Szenario", ["Worst", "Base", "Best"],
+                index=["Worst", "Base", "Best"].index(st.session_state.inp_scenario),
+                horizontal=True, label_visibility="collapsed", key="wz_scenario"
+            )
+
+        st.markdown("")
+        # Live-Vorschau
+        wz_deals_preview = wz_rev / wz_deal if wz_deal > 0 else 0
+        st.info(
+            f"📊 Bei **€{wz_rev:,.0f}** Umsatzziel und **€{wz_deal:,.0f}** Ø Deal Size "
+            f"brauchst du ca. **{wz_deals_preview:.0f} Deals** — "
+            f"bei einem Budget von **€{wz_budget:,.0f}**.",
+            icon="💡"
+        )
+
+        st.markdown("")
+        if st.button("Weiter → Funnel-Typ wählen", type="primary", use_container_width=True):
+            st.session_state.inp_revenue   = wz_rev
+            st.session_state.inp_deal_size = wz_deal
+            st.session_state.inp_budget    = wz_budget
+            st.session_state.inp_scenario  = wz_scenario
+            st.session_state.wizard_step   = 1
+            st.rerun()
+
+    # ══════════════════════════════════════════════════════════
+    # SCHRITT 2: Funnel-Typ
+    # ══════════════════════════════════════════════════════════
+    elif _ws == 1:
+        st.subheader("🏗️ Welchen Funnel-Typ verwendest du?")
+        st.caption(
+            "Wähle einen Archetype als Ausgangspunkt — oder definiere deinen eigenen Funnel "
+            "mit eigenen Stufen-Namen. Du kannst die Conversion Rates im nächsten Schritt anpassen."
+        )
+        st.markdown("")
+
+        wz_arch = st.selectbox(
+            "Funnel-Archetype",
+            list(FUNNEL_ARCHETYPES.keys()),
+            index=list(FUNNEL_ARCHETYPES.keys()).index(st.session_state.inp_archetype),
+            key="wz_archetype"
+        )
+
+        if wz_arch == "Custom (eigener Funnel)":
+            st.markdown("")
+            st.markdown("**📝 Definiere deine eigenen Funnel-Stufen** *(von oben nach unten)*")
+            st.caption(
+                "Benenne alle 7 Stufen deines Funnels — von Revenue (Ziel) bis zum ersten Touchpoint. "
+                "Die Namen erscheinen überall in der App."
+            )
+            _csn = st.session_state.inp_custom_stage_names
+            wz_csn_cols = st.columns(4)
+            _csn_labels = ["① Revenue (Ziel)", "② Deals", "③ Stufe 3", "④ Stufe 4",
+                           "⑤ Stufe 5", "⑥ Stufe 6", "⑦ Top (Touchpoints)"]
+            _new_csn = []
+            for _i, (_lbl, _col) in enumerate(zip(_csn_labels,
+                    [wz_csn_cols[_i % 4] for _i in range(7)])):
+                _new_csn.append(
+                    _col.text_input(_lbl, value=_csn[_i], key=f"wz_csn_{_i}", max_chars=20)
+                )
+
+            # Funnel-Vorschau
+            st.markdown("")
+            st.caption("Vorschau deines Funnels:")
+            _prev_cols = st.columns(7)
+            for _i, (_pc, _name) in enumerate(zip(_prev_cols, _new_csn)):
+                _width = max(30, 100 - _i * 12)
+                _pc.markdown(
+                    f"<div style='background:#0066cc;color:#fff;border-radius:4px;"
+                    f"padding:4px 2px;text-align:center;font-size:0.7rem;"
+                    f"font-weight:600;width:{_width}%;margin:auto;'>{_name}</div>",
+                    unsafe_allow_html=True
+                )
+        else:
+            # Zeige Stufen des gewählten Archetypes als Vorschau
+            _arch_preview = FUNNEL_ARCHETYPES[wz_arch]
+            st.markdown("")
+            st.caption(f"Funnel-Stufen für **{wz_arch}**:")
+            _prev_cols = st.columns(7)
+            for _i, (_pc, _name) in enumerate(zip(_prev_cols, _arch_preview["stage_names"])):
+                _width = max(30, 100 - _i * 12)
+                _pc.markdown(
+                    f"<div style='background:#0066cc;color:#fff;border-radius:4px;"
+                    f"padding:4px 2px;text-align:center;font-size:0.7rem;"
+                    f"font-weight:600;width:{_width}%;margin:auto;'>{_name}</div>",
+                    unsafe_allow_html=True
+                )
+            _new_csn = None
+
+        st.markdown("")
+        wz_b1, wz_b2 = st.columns(2)
+        with wz_b1:
+            if st.button("← Zurück", use_container_width=True, key="wiz1_back"):
+                st.session_state.wizard_step = 0
+                st.rerun()
+        with wz_b2:
+            if st.button("Weiter → Conversion Rates", type="primary",
+                         use_container_width=True, key="wiz1_next"):
+                prev_arch = st.session_state.inp_archetype
+                st.session_state.inp_archetype = wz_arch
+                if wz_arch != prev_arch:
+                    st.session_state.inp_cr_df = make_cr_df(wz_arch)
+                if wz_arch == "Custom (eigener Funnel)" and _new_csn:
+                    st.session_state.inp_custom_stage_names = _new_csn
+                    # Update CR df Stage labels for custom funnel
+                    _cr = st.session_state.inp_cr_df.copy()
+                    _cr["Stage"] = [
+                        f"{_new_csn[_i+2]} → {_new_csn[_i+1]}" for _i in range(5)
+                    ]
+                    st.session_state.inp_cr_df = _cr
+                st.session_state.wizard_step = 2
+                st.rerun()
+
+    # ══════════════════════════════════════════════════════════
+    # SCHRITT 3: Conversion Rates
+    # ══════════════════════════════════════════════════════════
+    elif _ws == 2:
+        st.subheader("📊 Conversion Rates — was kennst du aus deiner Erfahrung?")
+        st.caption(
+            "Trage deine eigenen Conversion Rates ein — oder behalte die Archetype-Defaults. "
+            "Alle drei Spalten (Worst / Base / Best) bilden den Risikokorridor für die Simulation."
+        )
+        _active_arch = st.session_state.inp_archetype
+        _scen_col_wiz = {"Worst": "Worst (%)", "Base": "Base (%)", "Best": "Best (%)"}[
+            st.session_state.inp_scenario]
+
+        st.caption(f"Aktiv: **{st.session_state.inp_scenario}**-Spalte · Werte in Prozent (z.B. 25 = 25 %)")
+
+        _wiz_cr_edited = st.data_editor(
+            st.session_state.inp_cr_df,
+            use_container_width=True, num_rows="fixed", hide_index=True,
+            column_config={
+                "Stage":     st.column_config.TextColumn("Funnel-Stufe", disabled=True, width="large"),
+                "Worst (%)": st.column_config.NumberColumn("Worst (%)",  min_value=1, max_value=99, step=1),
+                "Base (%)":  st.column_config.NumberColumn("Base (%)",   min_value=1, max_value=99, step=1),
+                "Best (%)":  st.column_config.NumberColumn("Best (%)",   min_value=1, max_value=99, step=1),
+            },
+            key="wiz_cr_editor",
+        )
+        st.session_state.inp_cr_df = _wiz_cr_edited
+
+        # Mini-Balkendiagramm
+        _wiz_active_crs = _wiz_cr_edited[_scen_col_wiz].tolist()
+        _fig_wiz_cr = go.Figure(go.Bar(
+            x=_wiz_cr_edited["Stage"].tolist(), y=_wiz_active_crs,
+            marker_color="#0066cc", text=[f"{v}%" for v in _wiz_active_crs],
+            textposition="outside",
+        ))
+        _fig_wiz_cr.update_layout(
+            height=180, margin=dict(l=0, r=0, t=10, b=0),
+            yaxis=dict(range=[0, 105], title="Rate (%)"),
+            paper_bgcolor="rgba(0,0,0,0)", showlegend=False,
+        )
+        st.plotly_chart(_fig_wiz_cr, use_container_width=True)
+
+        st.markdown("")
+        wz_b1, wz_b2 = st.columns(2)
+        with wz_b1:
+            if st.button("← Zurück", use_container_width=True, key="wiz2_back"):
+                st.session_state.wizard_step = 1
+                st.rerun()
+        with wz_b2:
+            if st.button("Weiter → Channel Mix", type="primary",
+                         use_container_width=True, key="wiz2_next"):
+                st.session_state.wizard_step = 3
+                st.rerun()
+
+    # ══════════════════════════════════════════════════════════
+    # SCHRITT 4: Channel Mix
+    # ══════════════════════════════════════════════════════════
+    elif _ws == 3:
+        st.subheader("📡 Channel Mix — mit welchen Kanälen arbeitest du?")
+        st.caption(
+            "Passe die Kanäle, Kosten pro MQL und den relativen Anteil an. "
+            "Kanäle die du nicht nutzt, kannst du einfach auf **Share = 0** setzen — "
+            "sie werden dann automatisch herausgerechnet."
+        )
+
+        _wiz_ch_display = st.session_state.channels_df[
+            ["group", "activity", "cost_per_mql", "share"]
+        ].copy()
+        _wiz_ch_display.columns = ["Kanal-Gruppe", "Aktivität", "Cost per MQL (€)", "Share (%)"]
+
+        _wiz_ch_edited = st.data_editor(
+            _wiz_ch_display,
+            use_container_width=True, num_rows="fixed", hide_index=True,
+            column_config={
+                "Kanal-Gruppe": st.column_config.TextColumn(disabled=True),
+                "Aktivität":    st.column_config.TextColumn(disabled=True),
+                "Cost per MQL (€)": st.column_config.NumberColumn(
+                    min_value=0, max_value=5_000, step=5,
+                    help="Kosten pro MQL für diesen Kanal"),
+                "Share (%)": st.column_config.NumberColumn(
+                    min_value=0.0, max_value=100.0, step=0.5,
+                    help="Auf 0 setzen = Kanal deaktivieren"),
+            },
+            key="wiz_ch_editor",
+        )
+        _wiz_updated_ch = st.session_state.channels_df.copy()
+        _wiz_updated_ch["cost_per_mql"] = _wiz_ch_edited["Cost per MQL (€)"].values
+        _wiz_updated_ch["share"]        = _wiz_ch_edited["Share (%)"].values
+        st.session_state.channels_df = _wiz_updated_ch
+
+        st.markdown("")
+        wz_b1, wz_b2 = st.columns(2)
+        with wz_b1:
+            if st.button("← Zurück", use_container_width=True, key="wiz3_back"):
+                st.session_state.wizard_step = 2
+                st.rerun()
+        with wz_b2:
+            if st.button("Weiter → Historische Daten", type="primary",
+                         use_container_width=True, key="wiz3_next"):
+                st.session_state.wizard_step = 4
+                st.rerun()
+
+    # ══════════════════════════════════════════════════════════
+    # SCHRITT 5: Historische Ist-Daten (optional)
+    # ══════════════════════════════════════════════════════════
+    elif _ws == 4:
+        st.subheader("📅 Historische Ist-Daten — optional")
+        st.caption(
+            "Hast du Daten aus den letzten Monaten? Trage sie hier direkt ein. "
+            "Sie erscheinen dann im **📈 Plan vs. Actual** Tab für einen direkten Soll-/Ist-Vergleich. "
+            "Du kannst diesen Schritt auch überspringen und die Daten später nachtragen."
+        )
+
+        _actual_sum = st.session_state.actual_df["Actual MQLs"].sum()
+        if _actual_sum == 0:
+            st.info(
+                "💡 **Tipp:** Trage die MQLs, Deals, Revenue und Budget deiner letzten Monate ein. "
+                "Alle Felder sind optional — füll nur aus, was du hast.",
+                icon="📋"
+            )
+
+        _wiz_edited_actual = st.data_editor(
+            st.session_state.actual_df,
+            use_container_width=True, num_rows="fixed", hide_index=True,
+            column_config={
+                "Month":              st.column_config.TextColumn("Monat", disabled=True),
+                "Actual MQLs":        st.column_config.NumberColumn("Ist MQLs",        min_value=0, step=1,    format="%.0f"),
+                "Actual Deals":       st.column_config.NumberColumn("Ist Deals",        min_value=0, step=0.5,  format="%.1f"),
+                "Actual Revenue (€)": st.column_config.NumberColumn("Ist Revenue (€)",  min_value=0, step=1000, format="€%.0f"),
+                "Actual Budget (€)":  st.column_config.NumberColumn("Ist Budget (€)",   min_value=0, step=500,  format="€%.0f"),
+            },
+            key="wiz_actual_editor",
+        )
+        st.session_state.actual_df = _wiz_edited_actual
+
+        # Report-Monat auswählen (YTD)
+        st.markdown("")
+        _wiz_filled_months = [MONTHS[i] for i in range(12)
+                              if _wiz_edited_actual.iloc[i]["Actual MQLs"] > 0]
+        if _wiz_filled_months:
+            st.session_state.inp_report_month = st.selectbox(
+                "Bis zu welchem Monat soll der YTD-Vergleich laufen?",
+                MONTHS,
+                index=MONTHS.index(_wiz_filled_months[-1]),
+                key="wiz_report_month"
+            )
+            st.caption(
+                f"Du hast Ist-Daten für: **{', '.join(_wiz_filled_months)}** · "
+                f"Berichtsmonat automatisch auf **{st.session_state.inp_report_month}** gesetzt."
+            )
+
+        st.markdown("")
+        wz_b1, wz_b2, wz_b3 = st.columns([1, 1, 1])
+        with wz_b1:
+            if st.button("← Zurück", use_container_width=True, key="wiz4_back"):
+                st.session_state.wizard_step = 3
+                st.rerun()
+        with wz_b2:
+            if st.button("⏭️ Überspringen", use_container_width=True, key="wiz4_skip"):
+                st.session_state.wizard_done = True
+                st.session_state.wizard_step = 0
+                st.rerun()
+        with wz_b3:
+            if st.button("✅ Fertig — zur Analyse", type="primary",
+                         use_container_width=True, key="wiz4_done"):
+                st.session_state.wizard_done = True
+                st.session_state.wizard_step = 0
+                st.rerun()
+
 
 # ══════════════════════════════════════════════════════════════
 # TAB: INPUTS
@@ -876,9 +1263,41 @@ with tab_inp:
             "Contact→Lead · Benchmark: 15–30 %. Partnerqualität entscheidend.",
             "Touchpoint→Contact · Benchmark: 2–7 %. Events & Co-Marketing.",
         ],
+        "Custom (eigener Funnel)": [
+            "Trage deine eigenen Erfahrungswerte ein — keine generischen Benchmarks verfügbar.",
+            "Tipp: Worst = untere Grenze deiner bisherigen Performance.",
+            "Tipp: Base = realistisch erwarteter Wert aus Erfahrung.",
+            "Tipp: Best = Zielwert bei guter Execution.",
+            "Monte Carlo simuliert den Risikokorridor automatisch aus diesen drei Werten.",
+        ],
     }
     _benchmarks = _CR_BENCHMARKS.get(st.session_state.inp_archetype,
                                      [""] * 5)
+
+    # Für Custom-Funnel: Stufen-Namen editierbar machen
+    if st.session_state.inp_archetype == "Custom (eigener Funnel)":
+        with st.expander("✏️ Eigene Funnel-Stufen-Namen bearbeiten", expanded=False):
+            st.caption("Ändere die Namen deiner Funnel-Stufen. Änderungen wirken sich sofort auf alle Charts aus.")
+            _csn_inp = st.session_state.inp_custom_stage_names
+            _inp_cols = st.columns(4)
+            _inp_labels = ["① Revenue", "② Deals", "③ Stufe 3", "④ Stufe 4",
+                           "⑤ Stufe 5", "⑥ Stufe 6", "⑦ Touchpoints"]
+            _new_csn_inp = []
+            for _i, _lbl in enumerate(_inp_labels):
+                _new_csn_inp.append(
+                    _inp_cols[_i % 4].text_input(
+                        _lbl, value=_csn_inp[_i],
+                        key=f"inp_csn_{_i}", max_chars=20
+                    )
+                )
+            if st.button("💾 Stufen-Namen übernehmen", key="inp_csn_save"):
+                st.session_state.inp_custom_stage_names = _new_csn_inp
+                _cr_upd = st.session_state.inp_cr_df.copy()
+                _cr_upd["Stage"] = [
+                    f"{_new_csn_inp[_i+2]} → {_new_csn_inp[_i+1]}" for _i in range(5)
+                ]
+                st.session_state.inp_cr_df = _cr_upd
+                st.rerun()
 
     edited_cr = st.data_editor(
         st.session_state.inp_cr_df,
