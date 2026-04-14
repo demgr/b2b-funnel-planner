@@ -1188,38 +1188,45 @@ with tab2:
     fig_hist.add_trace(go.Histogram(x=mc_df["budget_req"], nbinsx=40,
         marker_color="#0066cc", opacity=0.75, name="Budget",
         hovertemplate="Budget: €%{x:,.0f}<br>Anzahl: %{y}"), row=1, col=1)
-    fig_hist.add_vline(x=available_budget, line_dash="dash", line_color="#dc3545", line_width=2,
-        annotation_text=f"Verfügbar €{available_budget:,.0f}",
-        annotation_font_color="#dc3545", annotation_font_size=11, row=1, col=1)
-    fig_hist.add_vline(x=p10_b, line_dash="dot", line_color="#28a745", line_width=1.5,
-        annotation_text=f"P10 €{p10_b:,.0f}",
-        annotation_font_color="#28a745", annotation_font_size=10,
-        annotation_position="top left", row=1, col=1)
-    fig_hist.add_vline(x=p50_b, line_dash="dot", line_color="#0066cc", line_width=2,
-        annotation_text=f"P50 €{p50_b:,.0f}",
-        annotation_font_color="#0066cc", annotation_font_size=11, row=1, col=1)
-    fig_hist.add_vline(x=p90_b, line_dash="dot", line_color="#fd7e14", line_width=1.5,
-        annotation_text=f"P90 €{p90_b:,.0f}",
-        annotation_font_color="#fd7e14", annotation_font_size=10,
-        annotation_position="top right", row=1, col=1)
+    # Annotation-Hilfsfunktion: gestaffelte Höhen, größere Schrift, Hintergrund
+    def _ann(text, color, y_paper, xanchor="left", xshift=6):
+        return dict(text=f"<b>{text}</b>", font=dict(color=color, size=13),
+                    bgcolor="rgba(255,255,255,0.82)", bordercolor=color,
+                    borderwidth=1, borderpad=3,
+                    yref="paper", y=y_paper,
+                    xanchor=xanchor, xshift=xshift,
+                    showarrow=False)
+
+    fig_hist.add_vline(x=available_budget, line_dash="dash", line_color="#dc3545", line_width=2, row=1, col=1)
+    fig_hist.add_vline(x=p10_b,           line_dash="dot",  line_color="#28a745", line_width=1.5, row=1, col=1)
+    fig_hist.add_vline(x=p50_b,           line_dash="dot",  line_color="#0066cc", line_width=2,   row=1, col=1)
+    fig_hist.add_vline(x=p90_b,           line_dash="dot",  line_color="#fd7e14", line_width=1.5, row=1, col=1)
+
+    for ann_x, ann_kwargs in [
+        (available_budget, _ann(f"Verfügbar €{available_budget:,.0f}", "#dc3545", 0.97)),
+        (p10_b,            _ann(f"P10 €{p10_b:,.0f}",                 "#28a745", 0.82)),
+        (p50_b,            _ann(f"P50 €{p50_b:,.0f}",                 "#0066cc", 0.67)),
+        (p90_b,            _ann(f"P90 €{p90_b:,.0f}",                 "#fd7e14", 0.52, xanchor="right", xshift=-6)),
+    ]:
+        fig_hist.add_annotation(x=ann_x, xref="x1", **ann_kwargs)
 
     # Right: MQL histogram
     fig_hist.add_trace(go.Histogram(x=mc_df["stage4"], nbinsx=40,
         marker_color="#28a745", opacity=0.75, name="MQLs",
         hovertemplate="MQLs: %{x:,.0f}<br>Anzahl: %{y}"), row=1, col=2)
-    fig_hist.add_vline(x=p10_mql, line_dash="dot", line_color="#28a745", line_width=1.5,
-        annotation_text=f"P10 {p10_mql:,.0f}",
-        annotation_font_color="#28a745", annotation_font_size=10,
-        annotation_position="top left", row=1, col=2)
-    fig_hist.add_vline(x=p50_mql, line_dash="dot", line_color="#0066cc", line_width=2,
-        annotation_text=f"P50 {p50_mql:,.0f}",
-        annotation_font_color="#0066cc", annotation_font_size=11, row=1, col=2)
-    fig_hist.add_vline(x=p90_mql, line_dash="dot", line_color="#fd7e14", line_width=1.5,
-        annotation_text=f"P90 {p90_mql:,.0f}",
-        annotation_font_color="#fd7e14", annotation_font_size=10,
-        annotation_position="top right", row=1, col=2)
 
-    fig_hist.update_layout(height=360, showlegend=False,
+    fig_hist.add_vline(x=p10_mql, line_dash="dot", line_color="#28a745", line_width=1.5, row=1, col=2)
+    fig_hist.add_vline(x=p50_mql, line_dash="dot", line_color="#0066cc", line_width=2,   row=1, col=2)
+    fig_hist.add_vline(x=p90_mql, line_dash="dot", line_color="#fd7e14", line_width=1.5, row=1, col=2)
+
+    for ann_x, ann_kwargs in [
+        (p10_mql, _ann(f"P10 {p10_mql:,.0f}", "#28a745", 0.97)),
+        (p50_mql, _ann(f"P50 {p50_mql:,.0f}", "#0066cc", 0.82)),
+        (p90_mql, _ann(f"P90 {p90_mql:,.0f}", "#fd7e14", 0.67, xanchor="right", xshift=-6)),
+    ]:
+        fig_hist.add_annotation(x=ann_x, xref="x2", **ann_kwargs)
+
+    fig_hist.update_layout(height=420, showlegend=False,
         paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=0, r=0, t=50, b=0))
     st.plotly_chart(fig_hist, use_container_width=True)
 
