@@ -40,13 +40,26 @@ st.markdown("""
     div[data-testid="stSidebar"] { background-color: #0d1b2a; }
     div[data-testid="stSidebar"] * { color: #e0e0e0 !important; }
 
-    /* ── Headings ──────────────────────────────────────────── */
+    /* ── Section headers with badge ────────────────────────── */
     .section-header {
-        font-size: 1rem; font-weight: 700;
-        color: #0066cc; margin-bottom: 4px;
-        border-bottom: 2px solid rgba(128,128,128,0.2);
-        padding-bottom: 4px;
+        font-size: 0.95rem; font-weight: 700;
+        color: var(--text-color); margin-bottom: 6px;
+        border-bottom: 1px solid rgba(128,128,128,0.18);
+        padding-bottom: 5px;
+        display: flex; align-items: center; gap: 9px;
     }
+    .section-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 22px; height: 22px; border-radius: 5px;
+        font-size: 0.72rem; font-weight: 800; color: #fff;
+        flex-shrink: 0; letter-spacing: 0;
+    }
+    .badge-a { background: #0066cc; }
+    .badge-b { background: #6f42c1; }
+    .badge-c { background: #28a745; }
+    .badge-d { background: #fd7e14; }
+    .badge-e { background: #dc3545; }
+    .badge-f { background: #6c757d; }
 
     /* ── Tab bar container ─────────────────────────────────── */
     div[data-testid="stTabs"] > div:first-child {
@@ -279,13 +292,13 @@ def _settings_bar(archetype, scenario, season_profile, coverage):
     scen_badge = {"Worst": "#dc3545", "Base": "#0066cc", "Best": "#28a745"}.get(scenario, "#0066cc")
     st.markdown(
         f"""<div class="theme-box">
-        <span style="font-weight:600;">🏗️ Archetype: <span class="accent">{archetype}</span></span>
-        <span style="font-weight:600;">📊 Szenario:
+        <span style="font-weight:600;">Archetype: <span class="accent">{archetype}</span></span>
+        <span style="font-weight:600;">Szenario:
           <span style="background:{scen_badge};color:#fff;padding:1px 7px;border-radius:10px;font-size:0.78rem;">{scenario}</span>
         </span>
-        <span style="font-weight:600;">📅 Saisonalität: {season_profile}</span>
+        <span style="font-weight:600;">Saisonalität: {season_profile}</span>
         <span style="font-weight:600;">{cov_icon} Coverage: {coverage:.0%}</span>
-        <span class="muted">← ⚙️ Inputs-Tab zum Ändern</span>
+        <span class="muted">← INPUTS zum Ändern</span>
         </div>""",
         unsafe_allow_html=True,
     )
@@ -674,7 +687,7 @@ plan_budget  = [total_required * w for w in season_weights]
 # ============================================================
 
 with st.sidebar:
-    st.markdown("### 📊 B2B Funnel Planner")
+    st.markdown("### B2B Funnel Planner")
     st.caption("© Marko Gross")
     st.divider()
     cov_icon = "🟢" if coverage >= 0.9 else ("🟡" if coverage >= 0.6 else "🔴")
@@ -728,7 +741,7 @@ with st.sidebar:
 # HEADER
 # ============================================================
 
-st.title("📊 B2B Revenue Reverse Funnel Planner")
+st.title("B2B Revenue Reverse Funnel Planner")
 gap_label = f"+€{budget_gap:,.0f}" if budget_gap >= 0 else f"-€{abs(budget_gap):,.0f}"
 gap_color = "normal" if budget_gap >= 0 else "inverse"
 
@@ -749,7 +762,7 @@ if coverage >= 0.9:
 elif coverage >= 0.6:
     st.warning(
         f"⚠️ **Budget-Lücke** — {coverage:.0%} Deckungsgrad. "
-        f"Es fehlen €{abs(budget_gap):,.0f}. Prüfe Channel-Mix oder erhöhe das Budget im ⚙️ Inputs-Tab.",
+        f"Es fehlen €{abs(budget_gap):,.0f}. Prüfe Channel-Mix oder erhöhe das Budget im INPUTS-Tab.",
         icon="🟡"
     )
 else:
@@ -767,14 +780,14 @@ st.divider()
 # ============================================================
 
 tab_wiz, tab_inp, tab1, tab2, tab3, tab4, tab5, tab_docs = st.tabs([
-    "🧙 Setup-Wizard",
-    "⚙️ Inputs",
-    "🔻 Funnel & Budget",
-    "🎲 Risk / Monte Carlo",
-    "📅 Monthly Plan",
-    "📈 Plan vs. Actual",
-    "📡 Channels",
-    "📖 Docs",
+    "SETUP",
+    "INPUTS",
+    "FUNNEL & BUDGET",
+    "RISK · MONTE CARLO",
+    "MONTHLY PLAN",
+    "PLAN vs. ACTUAL",
+    "CHANNELS",
+    "DOCS",
 ])
 
 # ══════════════════════════════════════════════════════════════
@@ -783,11 +796,11 @@ tab_wiz, tab_inp, tab1, tab2, tab3, tab4, tab5, tab_docs = st.tabs([
 with tab_wiz:
 
     WIZARD_STEPS = [
-        "🎯 Umsatzziel",
-        "🏗️ Funnel-Typ",
-        "📊 Conversion Rates",
-        "📡 Channel Mix",
-        "📅 Ist-Daten (optional)",
+        "Umsatzziel",
+        "Funnel-Typ",
+        "Conversion Rates",
+        "Channel Mix",
+        "Ist-Daten (optional)",
     ]
     _ws = st.session_state.wizard_step
 
@@ -795,7 +808,7 @@ with tab_wiz:
     if st.session_state.wizard_done:
         st.success(
             "✅ **Setup abgeschlossen!** Deine Konfiguration ist gespeichert. "
-            "Wechsle zu **🔻 Funnel & Budget** oder einem anderen Tab für die Auswertung.",
+            "Wechsle zu **FUNNEL & BUDGET** oder einem anderen Tab für die Auswertung.",
             icon="🎉"
         )
         if st.button("🔄 Wizard erneut durchlaufen", key="wiz_restart"):
@@ -826,10 +839,10 @@ with tab_wiz:
     # SCHRITT 1: Umsatzziel & Budget
     # ══════════════════════════════════════════════════════════
     if _ws == 0:
-        st.subheader("🎯 Was ist dein Umsatzziel?")
+        st.subheader("Schritt 1 — Umsatzziel & Budget")
         st.caption(
             "Starte mit deinen wichtigsten Eckdaten. "
-            "Alle Werte kannst du später jederzeit im ⚙️ Inputs-Tab anpassen."
+            "Alle Werte kannst du später jederzeit im INPUTS-Tab anpassen."
         )
         st.markdown("")
 
@@ -872,7 +885,7 @@ with tab_wiz:
         # Live-Vorschau
         wz_deals_preview = wz_rev / wz_deal if wz_deal > 0 else 0
         st.info(
-            f"📊 Bei **€{wz_rev:,.0f}** Umsatzziel und **€{wz_deal:,.0f}** Ø Deal Size "
+            f"Bei **€{wz_rev:,.0f}** Umsatzziel und **€{wz_deal:,.0f}** Ø Deal Size "
             f"brauchst du ca. **{wz_deals_preview:.0f} Deals** — "
             f"bei einem Budget von **€{wz_budget:,.0f}**.",
             icon="💡"
@@ -891,7 +904,7 @@ with tab_wiz:
     # SCHRITT 2: Funnel-Typ
     # ══════════════════════════════════════════════════════════
     elif _ws == 1:
-        st.subheader("🏗️ Welchen Funnel-Typ verwendest du?")
+        st.subheader("Schritt 2 — Funnel-Typ")
         st.caption(
             "Wähle einen Archetype als Ausgangspunkt — oder definiere deinen eigenen Funnel "
             "mit eigenen Stufen-Namen. Du kannst die Conversion Rates im nächsten Schritt anpassen."
@@ -979,7 +992,7 @@ with tab_wiz:
     # SCHRITT 3: Conversion Rates
     # ══════════════════════════════════════════════════════════
     elif _ws == 2:
-        st.subheader("📊 Conversion Rates — was kennst du aus deiner Erfahrung?")
+        st.subheader("Schritt 3 — Conversion Rates")
         st.caption(
             "Trage deine eigenen Conversion Rates ein — oder behalte die Archetype-Defaults. "
             "Alle drei Spalten (Worst / Base / Best) bilden den Risikokorridor für die Simulation."
@@ -1033,7 +1046,7 @@ with tab_wiz:
     # SCHRITT 4: Channel Mix
     # ══════════════════════════════════════════════════════════
     elif _ws == 3:
-        st.subheader("📡 Channel Mix — mit welchen Kanälen arbeitest du?")
+        st.subheader("Schritt 4 — Channel Mix")
         st.caption(
             "Passe die Kanäle, Kosten pro MQL und den relativen Anteil an. "
             "Kanäle die du nicht nutzt, kannst du einfach auf **Share = 0** setzen — "
@@ -1081,10 +1094,10 @@ with tab_wiz:
     # SCHRITT 5: Historische Ist-Daten (optional)
     # ══════════════════════════════════════════════════════════
     elif _ws == 4:
-        st.subheader("📅 Historische Ist-Daten — optional")
+        st.subheader("Schritt 5 — Historische Ist-Daten (optional)")
         st.caption(
             "Hast du Daten aus den letzten Monaten? Trage sie hier direkt ein. "
-            "Sie erscheinen dann im **📈 Plan vs. Actual** Tab für einen direkten Soll-/Ist-Vergleich. "
+            "Sie erscheinen dann im **PLAN vs. ACTUAL** Tab für einen direkten Soll-/Ist-Vergleich. "
             "Du kannst diesen Schritt auch überspringen und die Daten später nachtragen."
         )
 
@@ -1168,7 +1181,7 @@ with tab_inp:
         st.markdown("")
 
     # ── A: Business Targets ───────────────────────────────────
-    st.markdown('<p class="section-header">A · Business Targets</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header"><span class="section-badge badge-a">A</span> Business Targets</p>', unsafe_allow_html=True)
     ca1, ca2, ca3 = st.columns(3)
     with ca1:
         st.session_state.inp_revenue = st.number_input(
@@ -1192,7 +1205,7 @@ with tab_inp:
     st.divider()
 
     # ── B: Funnel Setup ───────────────────────────────────────
-    st.markdown('<p class="section-header">B · Funnel Archetype & Szenario</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header"><span class="section-badge badge-b">B</span> Funnel Archetype & Szenario</p>', unsafe_allow_html=True)
     cb1, cb2, cb3 = st.columns([2, 2, 1])
 
     with cb1:
@@ -1224,7 +1237,7 @@ with tab_inp:
     st.divider()
 
     # ── C: Conversion Rates ───────────────────────────────────
-    st.markdown('<p class="section-header">C · Conversion Rates</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header"><span class="section-badge badge-c">C</span> Conversion Rates</p>', unsafe_allow_html=True)
     active_arch = FUNNEL_ARCHETYPES[st.session_state.inp_archetype]
     scen_col_now = {"Worst": "Worst (%)", "Base": "Base (%)", "Best": "Best (%)"}[st.session_state.inp_scenario]
     st.caption(
@@ -1316,7 +1329,7 @@ with tab_inp:
         key="cr_editor",
     )
     # Show per-stage benchmark hints below table
-    with st.expander("📊 Branchen-Benchmarks für diesen Archetype anzeigen", expanded=False):
+    with st.expander("Branchen-Benchmarks für diesen Archetype anzeigen", expanded=False):
         for bm in _benchmarks:
             st.caption(f"• {bm}")
     st.session_state.inp_cr_df = edited_cr
@@ -1340,7 +1353,7 @@ with tab_inp:
     st.divider()
 
     # ── D: Seasonality ────────────────────────────────────────
-    st.markdown('<p class="section-header">D · Saisonalität</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header"><span class="section-badge badge-d">D</span> Saisonalität</p>', unsafe_allow_html=True)
     cd1, cd2 = st.columns([1, 2])
 
     with cd1:
@@ -1391,7 +1404,7 @@ with tab_inp:
     st.divider()
 
     # ── E: Channel Mix & Kosten ───────────────────────────────
-    st.markdown('<p class="section-header">E · Channel Mix & Kosten</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header"><span class="section-badge badge-e">E</span> Channel Mix & Kosten</p>', unsafe_allow_html=True)
     st.caption(
         "**Cost per MQL**: durchschnittliche Kosten, um einen MQL über diesen Kanal zu erzeugen. "
         "**Share**: relativer Anteil — wird automatisch normiert."
@@ -1427,7 +1440,7 @@ with tab_inp:
     st.divider()
 
     # ── F: Simulation & Berichtsmonat ─────────────────────────
-    st.markdown('<p class="section-header">F · Simulation & Berichtsmonat</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header"><span class="section-badge badge-f">F</span> Simulation & Berichtsmonat</p>', unsafe_allow_html=True)
     cf1, cf2 = st.columns(2)
     with cf1:
         st.session_state.inp_n_sims = st.select_slider(
@@ -1461,7 +1474,7 @@ with tab_inp:
     st.markdown(f"""
 <div class="theme-card" style="margin-top:16px;">
   <div style="font-size:0.82rem;font-weight:600;margin-bottom:6px;">
-    ⚙️ Konfigurationsfortschritt &nbsp;·&nbsp; {_done}/{_total} Bereiche angepasst
+    Konfigurationsfortschritt &nbsp;·&nbsp; {_done}/{_total} Bereiche angepasst
   </div>
   <div style="background:rgba(128,128,128,0.15);border-radius:4px;height:8px;overflow:hidden;">
     <div style="width:{_pct}%;background:{_bar_color};height:8px;
@@ -1564,7 +1577,7 @@ with tab1:
 # ══════════════════════════════════════════════════════════════
 with tab2:
     _settings_bar(archetype, scenario, season_profile, coverage)
-    st.subheader("Risk Analysis — Monte Carlo")
+    st.subheader("Risk Analysis · Monte Carlo")
     st.caption(f"**{n_sims} Simulationen** · PERT-Verteilungen aus Worst/Base/Best · Cost/MQL ±25 %")
 
     p10_b  = float(np.percentile(mc_df["budget_req"], 10))
@@ -1972,7 +1985,7 @@ with tab4:
 with tab5:
     _settings_bar(archetype, scenario, season_profile, coverage)
     st.subheader("Channel-Ergebnisse")
-    st.caption("Inputs (Cost per MQL, Share) änderst du im **⚙️ Inputs**-Tab → Abschnitt E.")
+    st.caption("Inputs (Cost per MQL, Share) änderst du im **INPUTS**-Tab → Abschnitt E.")
 
     ch_result = calc_channel_budget(stage4, st.session_state.channels_df)
     grp = (ch_result.groupby("group", as_index=False)
@@ -2035,7 +2048,7 @@ with tab_docs:
 </style>
 """, unsafe_allow_html=True)
 
-    st.title("📖 Dokumentation / Documentation")
+    st.title("Dokumentation / Documentation")
     st.caption("B2B Revenue Reverse Funnel Planner · © Marko Gross")
     st.divider()
 
@@ -2045,12 +2058,12 @@ with tab_docs:
         with c_de:
             st.markdown('<p class="docs-label-de">🇩🇪 Deutsch</p>', unsafe_allow_html=True)
             st.markdown("""
-**Empfohlen: 🧙 Setup-Wizard**
+**Empfohlen: SETUP**
 Der einfachste Einstieg — führt dich in 5 Schritten durch die komplette Konfiguration: Umsatzziel, Funnel-Typ, Conversion Rates, Channel Mix und historische Ist-Daten. Am Ende ist alles gespeichert und du kannst direkt in die Analyse-Tabs wechseln.
 
 ---
 
-**Alternativ: direkt zum ⚙️ Inputs-Tab**
+**Alternativ: direkt zum INPUTS-Tab**
 
 **1. Umsatzziel, Ø Deal Size und Marketingbudget eingeben** (Abschnitt A)
 
@@ -2063,12 +2076,12 @@ Die App berechnet sofort wie viele MQLs, Deals und wie viel Budget du brauchst �
         with c_en:
             st.markdown('<p class="docs-label-en">🇬🇧 English</p>', unsafe_allow_html=True)
             st.markdown("""
-**Recommended: 🧙 Setup Wizard**
+**Recommended: SETUP**
 The easiest starting point — walks you through 5 steps: revenue target, funnel type, conversion rates, channel mix, and historical actuals. Everything is saved at the end and you can jump straight into the analysis tabs.
 
 ---
 
-**Alternative: go directly to ⚙️ Inputs**
+**Alternative: go directly to INPUTS**
 
 **1. Enter revenue target, avg. deal size, and marketing budget** (Section A)
 
@@ -2132,14 +2145,14 @@ The result is a **distribution, not a single number**:
         st.markdown("""
 | Tab | DE — Was du siehst & wofür | EN — What you see & why |
 |-----|---------------------------|-------------------------|
-| 🧙 **Setup-Wizard** | Geführter 5-Schritte-Einstieg: Ziel → Funnel → CRs → Kanäle → Ist-Daten | Guided 5-step onboarding: target → funnel → CRs → channels → actuals |
-| ⚙️ **Inputs** | Alle Eingabefelder im Detail — inkl. Custom Funnel-Stufen, Saisonalität, Simulation | All input fields in detail — incl. custom funnel stages, seasonality, simulation |
-| 🔻 **Funnel & Budget** | Trichter-Grafik, Budget-Gauge, Kanal-Donut — Gesamtbild auf einen Blick | Funnel chart, budget gauge, channel donut — full picture at a glance |
-| 🎲 **Risk / Monte Carlo** | Histogramm, P10/P50/P90 — Wie robust ist der Plan? | Histogram, P10/P50/P90 — how robust is the plan? |
-| 📅 **Monthly Plan** | Monatstabelle + saisonaler Verlauf — Wann brauche ich was? | Monthly table + seasonal curve — when do you need what? |
-| 📈 **Plan vs. Actual** | Soll-Ist-Vergleich — Abweichungen monatlich tracken | Plan vs. actual comparison — track variance month by month |
-| 📡 **Channels** | Spend-Verteilung pro Kanal — Budget-Allokation optimieren | Spend breakdown per channel — optimize budget allocation |
-| 📖 **Docs** | Diese Dokumentation / This documentation | This documentation / Diese Dokumentation |
+| **SETUP** | Geführter 5-Schritte-Einstieg: Ziel → Funnel → CRs → Kanäle → Ist-Daten | Guided 5-step onboarding: target → funnel → CRs → channels → actuals |
+| **INPUTS** | Alle Eingabefelder im Detail — inkl. Custom Funnel-Stufen, Saisonalität, Simulation | All input fields in detail — incl. custom funnel stages, seasonality, simulation |
+| **FUNNEL & BUDGET** | Trichter-Grafik, Budget-Gauge, Kanal-Donut — Gesamtbild auf einen Blick | Funnel chart, budget gauge, channel donut — full picture at a glance |
+| **RISK · MONTE CARLO** | Histogramm, P10/P50/P90 — Wie robust ist der Plan? | Histogram, P10/P50/P90 — how robust is the plan? |
+| **MONTHLY PLAN** | Monatstabelle + saisonaler Verlauf — Wann brauche ich was? | Monthly table + seasonal curve — when do you need what? |
+| **PLAN vs. ACTUAL** | Soll-Ist-Vergleich — Abweichungen monatlich tracken | Plan vs. actual comparison — track variance month by month |
+| **CHANNELS** | Spend-Verteilung pro Kanal — Budget-Allokation optimieren | Spend breakdown per channel — optimize budget allocation |
+| **DOCS** | Diese Dokumentation / This documentation | This documentation / Diese Dokumentation |
 """)
         st.caption("💡 DE: Sidebar aufklappen für kompakte KPIs + Excel/PDF-Export. · EN: Open the sidebar for compact KPIs and Excel/PDF export.")
 
@@ -2148,21 +2161,21 @@ The result is a **distribution, not a single number**:
         faqs = [
             (
                 'Wie starte ich am besten — Wizard oder Inputs-Tab?',
-                '**Erster Start → Wizard empfohlen.** Er führt dich in 5 Schritten durch alles durch und erklärt jeden Bereich. Der ⚙️ Inputs-Tab ist der "Advanced Mode" für schnelle Anpassungen, sobald du die App kennst.',
+                '**Erster Start → Wizard empfohlen.** Er führt dich in 5 Schritten durch alles durch und erklärt jeden Bereich. Der INPUTS-Tab ist der "Advanced Mode" für schnelle Anpassungen, sobald du die App kennst.',
                 'Where should I start — Wizard or Inputs tab?',
-                '**First time → use the Wizard.** It walks you through all 5 steps with explanations. The ⚙️ Inputs tab is the "advanced mode" for quick tweaks once you know the app.',
+                '**First time → use the Wizard.** It walks you through all 5 steps with explanations. The INPUTS tab is the "advanced mode" for quick tweaks once you know the app.',
             ),
             (
                 'Wie definiere ich meinen eigenen Funnel?',
-                'Im 🧙 Setup-Wizard → Schritt 2 → "Custom (eigener Funnel)" wählen. Dann alle 7 Stufen frei benennen (z.B. "Prospect", "SAL", "Proposal", "Closed Won"). Alternativ im ⚙️ Inputs-Tab → Abschnitt B → Custom wählen → Expander "Eigene Funnel-Stufen-Namen bearbeiten".',
+                'Im SETUP → Schritt 2 → "Custom (eigener Funnel)" wählen. Dann alle 7 Stufen frei benennen (z.B. "Prospect", "SAL", "Proposal", "Closed Won"). Alternativ im INPUTS-Tab → Abschnitt B → Custom wählen → Expander "Eigene Funnel-Stufen-Namen bearbeiten".',
                 'How do I define my own custom funnel?',
-                'In 🧙 Setup Wizard → Step 2 → select "Custom (your own funnel)". Name all 7 stages freely (e.g. "Prospect", "SAL", "Proposal", "Closed Won"). Alternatively, in ⚙️ Inputs → Section B → select Custom → expand "Edit funnel stage names".',
+                'In SETUP → Step 2 → select "Custom (your own funnel)". Name all 7 stages freely (e.g. "Prospect", "SAL", "Proposal", "Closed Won"). Alternatively, in INPUTS → Section B → select Custom → expand "Edit funnel stage names".',
             ),
             (
                 'Wie trage ich historische Ist-Daten ein?',
-                'Zwei Wege: (1) Im 🧙 Setup-Wizard → Schritt 5 direkt eintragen. (2) Im Tab **📈 Plan vs. Actual** → Tabelle direkt editieren (MQLs, Deals, Revenue, Budget pro Monat). Beide schreiben in dieselbe Datenstruktur.',
+                'Zwei Wege: (1) Im SETUP → Schritt 5 direkt eintragen. (2) Im Tab **PLAN vs. ACTUAL** → Tabelle direkt editieren (MQLs, Deals, Revenue, Budget pro Monat). Beide schreiben in dieselbe Datenstruktur.',
                 'How do I enter historical actuals?',
-                'Two ways: (1) In 🧙 Setup Wizard → Step 5, enter actuals directly. (2) In **📈 Plan vs. Actual** tab → edit the table directly (MQLs, Deals, Revenue, Budget per month). Both write to the same data structure.',
+                'Two ways: (1) In SETUP → Step 5, enter actuals directly. (2) In **PLAN vs. ACTUAL** tab → edit the table directly (MQLs, Deals, Revenue, Budget per month). Both write to the same data structure.',
             ),
             (
                 'Was bedeutet "Budget Coverage"?',
@@ -2249,82 +2262,82 @@ The result is a **distribution, not a single number**:
 
         features = [
             (
-                "🧙", "Setup-Wizard",
-                "Neuer Benutzer? Starte im **🧙 Setup-Wizard** Tab — er führt dich in 5 Schritten durch die komplette Konfiguration. Am Ende wird alles gespeichert und du kannst direkt in die Analyse-Tabs wechseln. Den Wizard kannst du jederzeit erneut durchlaufen, um Werte zu aktualisieren.",
+                "—", "Setup-Wizard",
+                "Neuer Benutzer? Starte im **SETUP** Tab — er führt dich in 5 Schritten durch die komplette Konfiguration. Am Ende wird alles gespeichert und du kannst direkt in die Analyse-Tabs wechseln. Den Wizard kannst du jederzeit erneut durchlaufen, um Werte zu aktualisieren.",
                 "Setup Wizard",
-                "New user? Start in the **🧙 Setup Wizard** tab — it walks you through 5 steps to complete configuration. Everything is saved at the end and you jump straight into analysis. You can re-run the wizard any time to update your settings.",
+                "New user? Start in the **SETUP** tab — it walks you through 5 steps to complete configuration. Everything is saved at the end and you jump straight into analysis. You can re-run the wizard any time to update your settings.",
             ),
             (
-                "✏️", "Eigener Funnel (Custom)",
-                "Im Wizard → Schritt 2 oder im ⚙️ Inputs-Tab → Abschnitt B: **'Custom (eigener Funnel)'** wählen. Dann alle 7 Funnel-Stufen frei benennen — z.B. nach deinen CRM-Phasen. Die eigenen Namen erscheinen sofort in allen Charts, Tabellen und im Export.",
+                "—", "Eigener Funnel (Custom)",
+                "Im Wizard → Schritt 2 oder im INPUTS-Tab → Abschnitt B: **'Custom (eigener Funnel)'** wählen. Dann alle 7 Funnel-Stufen frei benennen — z.B. nach deinen CRM-Phasen. Die eigenen Namen erscheinen sofort in allen Charts, Tabellen und im Export.",
                 "Custom Funnel Stages",
-                "In Wizard → Step 2 or ⚙️ Inputs → Section B: select **'Custom (your own funnel)'**. Then name all 7 funnel stages freely — e.g. matching your CRM stages. Custom names appear instantly across all charts, tables, and exports.",
+                "In Wizard → Step 2 or INPUTS → Section B: select **'Custom (your own funnel)'**. Then name all 7 funnel stages freely — e.g. matching your CRM stages. Custom names appear instantly across all charts, tables, and exports.",
             ),
             (
-                "📅", "Historische Ist-Daten eintragen",
-                "Im Wizard → Schritt 5 oder im Tab **📈 Plan vs. Actual**: die editierbare Tabelle direkt befüllen (kein Upload, kein CSV). Einfach in die Zellen klicken und Werte eintragen — MQLs, Deals, Revenue und Budget pro Monat. Der YTD-Vergleich aktualisiert sich sofort.",
+                "—", "Historische Ist-Daten eintragen",
+                "Im Wizard → Schritt 5 oder im Tab **PLAN vs. ACTUAL**: die editierbare Tabelle direkt befüllen (kein Upload, kein CSV). Einfach in die Zellen klicken und Werte eintragen — MQLs, Deals, Revenue und Budget pro Monat. Der YTD-Vergleich aktualisiert sich sofort.",
                 "Enter historical actuals",
-                "In Wizard → Step 5 or in **📈 Plan vs. Actual** tab: fill the editable table directly (no upload, no CSV). Just click cells and type — MQLs, Deals, Revenue and Budget per month. The YTD comparison updates immediately.",
+                "In Wizard → Step 5 or in **PLAN vs. ACTUAL** tab: fill the editable table directly (no upload, no CSV). Just click cells and type — MQLs, Deals, Revenue and Budget per month. The YTD comparison updates immediately.",
             ),
             (
-                "🎥", "Screencast aufnehmen",
+                "—", "Screencast aufnehmen",
                 "Drei-Punkte-Menü oben rechts (⋮) → **Record a screencast** — direkt im Browser, kein Extra-Tool nötig. Perfekt für Demo-Videos oder kurze Erklärungen für Kollegen.",
                 "Record a screencast",
                 "Three-dot menu top right (⋮) → **Record a screencast** — right in the browser, no extra tool needed. Perfect for demo videos or quick walkthroughs for colleagues.",
             ),
             (
-                "📥", "Excel & PDF Export",
+                "—", "Excel & PDF Export",
                 "Sidebar aufklappen (Pfeil links) → **📥 Excel exportieren** (4 Sheets) oder **📄 PDF exportieren** (1-seitiger Report). Dateiname enthält automatisch das Tagesdatum.",
                 "Excel & PDF Export",
                 "Open the sidebar (arrow on the left) → **📥 Excel Export** (4 sheets) or **📄 PDF Export** (1-page report). Filename automatically includes today's date.",
             ),
             (
-                "📊", "Interaktive Charts",
+                "—", "Interaktive Charts",
                 "Alle Charts sind vollständig interaktiv: Zoomen, Panning, Hover-Tooltips mit genauen Werten, Legenden ein-/ausblenden. Kamera-Icon in der Chart-Toolbar → Chart als **PNG herunterladen**.",
                 "Interactive Charts",
                 "All charts are fully interactive: zoom, pan, hover tooltips with exact values, toggle legend entries. Camera icon in the chart toolbar → download chart as **PNG**.",
             ),
             (
-                "📋", "Tabellen als CSV",
+                "—", "Tabellen als CSV",
                 "Über jede Datentabelle hovern → kleines Download-Icon erscheint oben rechts → direkt als **CSV exportieren**, ohne Extra-Button.",
                 "Tables as CSV",
                 "Hover over any data table → a small download icon appears top right → export directly as **CSV**, no extra button needed.",
             ),
             (
-                "🌙", "Dark Mode",
+                "—", "Dark Mode",
                 "Drei-Punkte-Menü (⋮) → **Settings** → Theme umschalten zwischen Hell und Dunkel.",
                 "Dark Mode",
                 "Three-dot menu (⋮) → **Settings** → toggle between light and dark theme.",
             ),
             (
-                "↔️", "Sidebar ein-/ausklappen",
+                "—", "Sidebar ein-/ausklappen",
                 "Pfeil am linken Rand — gibt mehr Platz für Charts. Die KPIs (Revenue, Budget, Coverage) bleiben jederzeit erreichbar.",
                 "Collapse / expand sidebar",
                 "Arrow on the left edge — gives more space for charts. KPIs (Revenue, Budget, Coverage) remain accessible at any time.",
             ),
             (
-                "🔗", "Direktlink teilen",
+                "—", "Direktlink teilen",
                 "Die Streamlit-Cloud-URL ist sofort teilbar — **kein Login nötig** für Empfänger. Link kopieren und an Stakeholder schicken.",
                 "Share a direct link",
                 "The Streamlit Cloud URL is instantly shareable — **no login required** for recipients. Copy and send to stakeholders.",
             ),
             (
-                "📱", "Mobile-tauglich",
+                "—", "Mobile-tauglich",
                 "Die App läuft auch im Smartphone-Browser — gut für schnelle Checks unterwegs oder Präsentationen vom Tablet.",
                 "Mobile-friendly",
                 "The app runs in any mobile browser — great for quick checks on the go or tablet presentations.",
             ),
             (
-                "🔄", "Live-Berechnung",
+                "—", "Live-Berechnung",
                 "Jede Eingabe löst sofort eine Neuberechnung aus — kein 'Berechnen'-Button nötig. Änderungen in CRs oder Budget sind in Echtzeit in allen Tabs sichtbar.",
                 "Live recalculation",
                 "Every input instantly triggers a full recalculation — no 'Calculate' button needed. Changes to CRs or budget are reflected across all tabs in real time.",
             ),
             (
-                "📂", "Musterdaten laden",
-                "Im Tab **📈 Plan vs. Actual** → Button **'Musterdaten laden'** — füllt ein realistisches Jahresprofil (inkl. Sommerdip, Q4-Stärke) als Startpunkt.",
+                "—", "Musterdaten laden",
+                "Im Tab **PLAN vs. ACTUAL** → Button **'Musterdaten laden'** — füllt ein realistisches Jahresprofil (inkl. Sommerdip, Q4-Stärke) als Startpunkt.",
                 "Load sample data",
-                "In the **📈 Plan vs. Actual** tab → **'Load sample data'** button — fills a realistic seasonal year profile (summer dip, Q4 strength) as a starting point.",
+                "In the **PLAN vs. ACTUAL** tab → **'Load sample data'** button — fills a realistic seasonal year profile (summer dip, Q4 strength) as a starting point.",
             ),
         ]
 
@@ -2379,9 +2392,9 @@ The result is a **distribution, not a single number**:
 **Szenario:** Q2 ist abgeschlossen. Das Team hat 45 % der geplanten MQLs erreicht, aber nur 30 % des Umsatzziels. Der VP fragt: Reichen die verbleibenden 6 Monate noch?
 
 **Vorgehen:**
-1. Tab **📈 Plan vs. Actual** öffnen → Ist-Zahlen für Jan–Jun eintragen
+1. Tab **PLAN vs. ACTUAL** öffnen → Ist-Zahlen für Jan–Jun eintragen
 2. Lücke sofort sichtbar: Wo weicht es am stärksten ab — MQLs, Win Rate oder Deal Size?
-3. Im Tab **⚙️ Inputs** die CRs für H2 anpassen (z. B. höhere Win Rate durch neues Sales-Enablement)
+3. Im Tab **INPUTS** die CRs für H2 anpassen (z. B. höhere Win Rate durch neues Sales-Enablement)
 4. Monte Carlo zeigt: Mit optimierten CRs liegt P50 noch knapp über Ziel — P90 erfordert +15 % Budget
 5. **PDF exportieren** → kompakter 1-Seiter für das Management-Meeting
 
@@ -2393,9 +2406,9 @@ The result is a **distribution, not a single number**:
 **Scenario:** Q2 is done. The team hit 45% of planned MQLs but only 30% of the revenue target. The VP asks: Can we still close the gap in H2?
 
 **Steps:**
-1. Open tab **📈 Plan vs. Actual** → enter actuals for Jan–Jun
+1. Open tab **PLAN vs. ACTUAL** → enter actuals for Jan–Jun
 2. Gap immediately visible: where is the biggest deviation — MQLs, win rate, or deal size?
-3. In **⚙️ Inputs**, adjust H2 CRs (e.g. higher win rate from new sales enablement)
+3. In **INPUTS**, adjust H2 CRs (e.g. higher win rate from new sales enablement)
 4. Monte Carlo shows: with optimized CRs, P50 is just above target — P90 requires +15% budget
 5. **Export to PDF** → compact 1-pager for the management meeting
 
